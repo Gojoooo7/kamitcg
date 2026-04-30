@@ -39,6 +39,7 @@ KamiTCG est un **portfolio tracker mobile pour le jeu de cartes One Piece (OPCG)
 5. **Préférer éditer** les fichiers existants plutôt que d'en créer de nouveaux.
 6. **Architecture lib/** — feature-first (un dossier par feature : `auth/`, `portfolio/`, `scanner/`, `market/`, `paywall/`), avec sous-dossiers `data/`, `domain/`, `presentation/`. À mettre en place dès qu'on dépasse le scaffold initial.
 7. **Tests** — au minimum un test unitaire pour chaque service métier (parseur OCR, calcul plus-value, repository Supabase mocké).
+8. **Toujours utiliser les versions les plus récentes des packages.** Avant d'ajouter ou de mettre à jour une dépendance, vérifier la dernière version stable sur **pub.dev** (via WebFetch sur `https://pub.dev/packages/<nom>`) et utiliser cette version exacte dans `pubspec.yaml`. Cette règle s'applique à toutes les sessions, y compris pour réviser des dépendances ajoutées dans des sessions précédentes (faire un `flutter pub outdated` au début de session si pertinent et proposer les mises à jour).
 
 ## Sécurité (à respecter par défaut)
 

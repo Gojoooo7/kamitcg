@@ -9,38 +9,39 @@
 ## Phase 0 — Fondations projet
 
 - [x] Initialiser le projet Flutter (scaffold)
-- [ ] Remplacer le contenu par défaut de `lib/main.dart` (compteur)
-- [ ] Mettre en place l'arborescence `lib/` feature-first
-  - [ ] `lib/core/` (theme, router, constants, utils)
-  - [ ] `lib/features/auth/`
-  - [ ] `lib/features/portfolio/`
-  - [ ] `lib/features/scanner/`
-  - [ ] `lib/features/market/`
-  - [ ] `lib/features/paywall/`
-- [ ] Ajouter les dépendances dans `pubspec.yaml` :
-  - [ ] `flutter_riverpod` + `riverpod_annotation` + `riverpod_generator`
-  - [ ] `supabase_flutter`
-  - [ ] `google_mlkit_text_recognition`
-  - [ ] `camera`
-  - [ ] `purchases_flutter` (RevenueCat)
-  - [ ] `go_router` (navigation)
-  - [ ] `fl_chart` (graphiques)
-  - [ ] `flutter_secure_storage` (tokens)
-  - [ ] `intl` (formatage prix/dates)
-  - [ ] `freezed` + `json_serializable` (modèles immuables)
-- [ ] Configurer `analysis_options.yaml` avec règles strictes
+- [x] Remplacer le contenu par défaut de `lib/main.dart` (compteur)
+- [x] Mettre en place l'arborescence `lib/` feature-first
+  - [x] `lib/core/` (theme, router, constants, utils, widgets)
+  - [x] `lib/features/auth/`
+  - [x] `lib/features/portfolio/`
+  - [x] `lib/features/scanner/`
+  - [x] `lib/features/market/`
+  - [x] `lib/features/paywall/`
+  - [x] `lib/features/profile/`
+- [x] Ajouter les dépendances dans `pubspec.yaml` (versions latest pub.dev) :
+  - [x] `flutter_riverpod` + `riverpod_annotation` + `riverpod_generator`
+  - [x] `supabase_flutter`
+  - [x] `google_mlkit_text_recognition`
+  - [x] `camera`
+  - [x] `purchases_flutter` (RevenueCat)
+  - [x] `go_router` (navigation) — installé, à brancher quand on aura l'auth
+  - [x] `fl_chart` (graphiques) — installé, on utilise un CustomPainter pour le moment
+  - [x] `flutter_secure_storage` (tokens)
+  - [x] `intl` (formatage prix/dates)
+  - [x] `freezed` + `json_serializable` (modèles immuables)
+  - [x] `flutter_dotenv` + `google_fonts`
+  - [ ] Réactiver `riverpod_lint` + `custom_lint` quand l'écosystème lève le pin analyzer ^8
+- [x] Configurer `analysis_options.yaml` avec règles strictes
 - [ ] Créer un `README.md` projet (build, run, env vars)
 
 ## Phase 1 — Design system & thème
 
-- [ ] Définir la palette finale (doré OU violet) — **arbitrage à faire**
-- [ ] Implémenter `AppTheme` dark mode (couleurs, typographie tabular)
-- [ ] Créer composants de base réutilisables :
-  - [ ] `PriceText` (vert/rouge selon delta, format monnaie)
-  - [ ] `CardTile` (vignette carte avec illustration, prix, delta)
-  - [ ] `ChangeBadge` (+12,3 % en pill vert/rouge)
-  - [ ] `KamiButton` (primary/secondary/ghost)
-- [ ] Définir système d'icônes (lucide ou material)
+- [x] Palette définitive : doré (`#D4AF37`) — décision arrêtée
+- [x] Implémenter `AppTheme` dark mode (couleurs, typographie tabular)
+- [x] Implémenter le design KamiTCG.html : Dashboard, Collection, CardDetail, Scanner, BottomNav + FAB
+- [x] Composants de base : `DeltaBadge`, `Sparkline`, `LineChartView`, `CardArtTile`, `RarityPill`, `StatTile`, `IconButtonChip`, `BottomNavShell`
+- [x] Système d'icônes : Material (`Icons.*`) — minimaliste, suffisant pour V1
+- [ ] Tester le rendu sur device iOS + Android physique (cf. ci-dessous, pas de device disponible côté Claude)
 
 ## Phase 2 — Auth & Backend Supabase
 
