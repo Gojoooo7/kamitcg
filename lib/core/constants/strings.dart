@@ -82,6 +82,24 @@ class Strings {
   static const String navMarket = 'Marché';
   static const String navProfile = 'Profil';
 
+  // Auth ─────────────────────────────────────────────────────────────
+  static const String authTitle = 'KamiTCG';
+  static const String authTagline =
+      'Suis la valeur de ta collection comme un actif financier.';
+  static const String authEmailLabel = 'Adresse email';
+  static const String authEmailPlaceholder = 'toi@exemple.com';
+  static const String authEmailInvalid = 'Adresse email invalide';
+  static const String authSendMagicLink = 'Recevoir le lien magique';
+  static const String authSendingMagicLink = 'Envoi en cours…';
+  static String authMagicLinkSent(String email) =>
+      'Lien envoyé à $email — vérifie ta boîte mail.';
+  static const String authMagicLinkResend = 'Renvoyer';
+  static const String authMagicLinkHint =
+      'Pas de mot de passe : nous t’envoyons un lien à usage unique pour te connecter en toute sécurité.';
+  static const String authError =
+      'Impossible d’envoyer le lien. Réessaie dans un instant.';
+  static const String authSignOut = 'Se déconnecter';
+
   // Placeholders ─────────────────────────────────────────────────────
   static const String marketTitle = 'Marché';
   static const String marketSubtitle =

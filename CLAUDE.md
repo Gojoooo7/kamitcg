@@ -56,6 +56,7 @@ KamiTCG manipule des données financières (prix d'achat, plus-value, reçus de 
 
 - Stockage des tokens Supabase via **`flutter_secure_storage`** (Keychain iOS / Keystore Android). **Jamais** `SharedPreferences` ni un fichier en clair.
 - Magic link : whitelister strictement les **redirect URLs** dans le dashboard Supabase (deep link `kamitcg://auth/callback` + URL de fallback web). Refuser tout autre redirect.
+- **Expiration du magic link / OTP : `600 s` (10 min)** dans Dashboard → Authentication → Providers → Email → "Email OTP Expiration". Le défaut Supabase (3600 s) est trop long pour une app financière.
 - Refresh token rotation activée côté Supabase. Sign-out → purge complète du secure storage.
 - Garde de routes côté client **et** RLS côté serveur (jamais l'un sans l'autre).
 

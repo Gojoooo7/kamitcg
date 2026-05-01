@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/router/app_root.dart';
+import 'core/supabase/supabase_init.dart';
 import 'core/theme/app_theme.dart';
-import 'features/portfolio/presentation/home_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+  await initSupabase();
   await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
     DeviceOrientation.portraitUp,
   ]);
@@ -26,7 +28,7 @@ class KamiTcgApp extends StatelessWidget {
       themeMode: ThemeMode.dark,
       theme: AppTheme.dark(),
       darkTheme: AppTheme.dark(),
-      home: const HomeShell(),
+      home: const AppRoot(),
     );
   }
 }
