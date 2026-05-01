@@ -22,6 +22,9 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<!-- Caméra pour le scanner OCR (ML Kit local, aucune donnée envoyée). -->
+	<key>NSCameraUsageDescription</key>
+	<string>KamiTCG utilise l’appareil photo uniquement pour scanner le code de tes cartes (ex: OP01-120) et les ajouter à ton portefeuille. La reconnaissance se fait en local sur ton téléphone, aucune image n’est transmise.</string>
 	<!-- Deep link Supabase magic link / OAuth callback. -->
 	<key>CFBundleURLTypes</key>
 	<array>

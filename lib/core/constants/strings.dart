@@ -79,11 +79,18 @@ class Strings {
 
   // Scanner ──────────────────────────────────────────────────────────
   static const String scannerTitle = 'Scanner une carte';
-  static const String scannerAiming = 'Place la carte dans le cadre';
+  static const String scannerAiming = 'Place le code de la carte dans le cadre';
   static const String scannerDetecting = 'Identification…';
   static const String scannerMatchFound = 'Carte trouvée';
   static const String scannerSkip = 'Ignorer';
   static const String scannerAdd = 'Ajouter au portefeuille';
+  static const String scannerCameraDenied =
+      'Autorisation caméra refusée. Active-la dans les réglages pour scanner.';
+  static const String scannerCameraInit =
+      'Initialisation de la caméra…';
+  static const String scannerNotInCatalogue =
+      'Carte non répertoriée dans le catalogue.';
+  static const String scannerManualEntry = 'Saisir manuellement';
 
   // Bottom nav ───────────────────────────────────────────────────────
   static const String navHome = 'Accueil';
