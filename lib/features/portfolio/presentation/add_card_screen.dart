@@ -7,8 +7,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/card_art.dart';
+import '../../../core/widgets/filter_chips_row.dart';
 import '../../../core/widgets/icon_button_chip.dart';
 import '../../../core/widgets/rarity_pill.dart';
+import '../domain/card_models.dart';
 import 'portfolio_providers.dart';
 
 /// Écran "Ajouter une carte" — browse du catalogue + variants. Tap = insert
@@ -25,7 +27,46 @@ class AddCardScreen extends ConsumerStatefulWidget {
 class _AddCardScreenState extends ConsumerState<AddCardScreen> {
   final _searchCtl = TextEditingController();
   String _query = '';
+  String _setFilter = Strings.filterAll;
+  String _rarityFilter = Strings.filterAll;
   String? _addingVariantId;
+
+  /// Sets disponibles dérivés du catalogue chargé (Strings.filterAll en tête).
+  List<String> _availableSets(List<CatalogueEntry> entries) {
+    final seen = <String>{};
+    for (final e in entries) {
+      seen.add(e.card.setCode);
+    }
+    final sorted = seen.toList()..sort();
+    return [Strings.filterAll, ...sorted];
+  }
+
+  /// Raretés disponibles dérivées du catalogue chargé, triées par rareté
+  /// décroissante (SEC en premier).
+  List<String> _availableRarities(List<CatalogueEntry> entries) {
+    final seen = <CardRarity>{};
+    for (final e in entries) {
+      seen.add(e.card.rarity);
+    }
+    final sorted = seen.toList()..sort((a, b) => b.rank.compareTo(a.rank));
+    return [Strings.filterAll, for (final r in sorted) r.label];
+  }
+
+  bool _matches(CatalogueEntry e) {
+    if (_query.isNotEmpty &&
+        !e.card.name.toLowerCase().contains(_query) &&
+        !e.card.code.toLowerCase().contains(_query)) {
+      return false;
+    }
+    if (_setFilter != Strings.filterAll && e.card.setCode != _setFilter) {
+      return false;
+    }
+    if (_rarityFilter != Strings.filterAll &&
+        e.card.rarity.label != _rarityFilter) {
+      return false;
+    }
+    return true;
+  }
 
   @override
   void dispose() {
@@ -149,37 +190,50 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                   ),
                 ),
                 data: (entries) {
-                  final filtered = _query.isEmpty
-                      ? entries
-                      : entries
-                          .where((e) =>
-                              e.card.name.toLowerCase().contains(_query) ||
-                              e.card.code.toLowerCase().contains(_query))
-                          .toList();
-                  if (filtered.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          Strings.addCardEmpty,
-                          textAlign: TextAlign.center,
-                          style: AppTypography.inter(
-                            size: 13,
-                            color: AppColors.text2,
-                          ),
-                        ),
+                  final filtered = entries.where(_matches).toList();
+                  return Column(
+                    children: [
+                      FilterChipsRow(
+                        items: _availableSets(entries),
+                        value: _setFilter,
+                        accent: AppColors.violet,
+                        onChange: (v) => setState(() => _setFilter = v),
                       ),
-                    );
-                  }
-                  return ListView.builder(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 24),
-                    itemCount: filtered.length,
-                    itemBuilder: (_, i) => _CatalogueRow(
-                      entry: filtered[i],
-                      isLoading: _addingVariantId == filtered[i].variant.id,
-                      onTap: () => _addVariant(filtered[i]),
-                    ),
+                      FilterChipsRow(
+                        items: _availableRarities(entries),
+                        value: _rarityFilter,
+                        accent: AppColors.gold,
+                        onChange: (v) => setState(() => _rarityFilter = v),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: filtered.isEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Center(
+                                  child: Text(
+                                    Strings.addCardEmpty,
+                                    textAlign: TextAlign.center,
+                                    style: AppTypography.inter(
+                                      size: 13,
+                                      color: AppColors.text2,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                physics: const BouncingScrollPhysics(),
+                                padding: const EdgeInsets.only(bottom: 24),
+                                itemCount: filtered.length,
+                                itemBuilder: (_, i) => _CatalogueRow(
+                                  entry: filtered[i],
+                                  isLoading: _addingVariantId ==
+                                      filtered[i].variant.id,
+                                  onTap: () => _addVariant(filtered[i]),
+                                ),
+                              ),
+                      ),
+                    ],
                   );
                 },
               ),
