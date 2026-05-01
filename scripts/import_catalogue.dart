@@ -165,12 +165,16 @@ Future<List<_ParsedCard>> _fetchSet(
 
   for (final block in blocks) {
     try {
+      // Source de vérité du code = id HTML (`OP01-001`, `OP01-001_p1`, etc.).
+      // Le <span> visible affiche le même code base pour tous les variants
+      // d'une même carte (les alt-arts ne montrent pas le _p1 à l'œil), donc
+      // on ne peut pas l'utiliser pour différencier base et alt-art.
       final id = block.attributes['id'];
       if (id == null) continue;
+      final fullCode = id.trim();
 
       final infoSpans = block.querySelectorAll('dt .infoCol span');
       if (infoSpans.length < 3) continue;
-      final fullCode = infoSpans[0].text.trim();
       final rarity = _normalizeRarity(infoSpans[1].text.trim());
       final cardType = infoSpans[2].text.trim();
       if (rarity == null) {
@@ -183,13 +187,11 @@ Future<List<_ParsedCard>> _fetchSet(
       final nameEl = block.querySelector('dt .cardName');
       final name = nameEl?.text.trim() ?? '';
 
-      final imgEl = block.querySelector('dd .frontCol img.lazy');
-      final dataSrc = imgEl?.attributes['data-src'];
-      if (dataSrc == null) continue;
-      // ../images/cardlist/card/OP01-001.png?260410 → URL absolue
-      final cleanedSrc = dataSrc.replaceFirst(RegExp(r'^\.\./'), '/');
-      final querylessSrc = cleanedSrc.split('?').first;
-      final imageUrl = '$_bandaiBaseUrl$querylessSrc';
+      // URL d'image déterministe à partir du code. Bandai héberge toutes les
+      // images selon ce pattern, même quand le HTML public utilise un
+      // placeholder (cas EB04-007 base : pas linkée mais l'URL existe).
+      final imageUrl =
+          '$_bandaiBaseUrl/images/cardlist/card/$fullCode.png';
 
       final colorEl = block.querySelector('dd .color');
       final colorText = colorEl == null
@@ -201,11 +203,13 @@ Future<List<_ParsedCard>> _fetchSet(
           .where((c) => c.isNotEmpty)
           .toList();
 
-      // Décompose le code : OP01-001, ST01-012, P-005, OP01-001_p1, P-005_p2…
-      // Le set_code peut être lettres seules (P, EB, ST, OP) ou lettres+chiffres
-      // (OP01, ST01, EB01, PRB01).
+      // Décompose le code : OP01-001, ST01-012, P-005, OP01-001_p1, OP01-001_r1…
+      // Suffixes connus :
+      //   _pN = parallel/alt-art (illustration différente)
+      //   _rN = reprint (réimpression dans un set ultérieur, souvent holo)
       final match =
-          RegExp(r'^([A-Z]+\d*)-(\d+)(_p\d+)?$').firstMatch(fullCode);
+          RegExp(r'^([A-Z]+\d*)-(\d+)((?:_p|_r)\d+)?$', caseSensitive: false)
+              .firstMatch(fullCode);
       if (match == null) {
         stderr.writeln('  ⚠ Code non reconnu : "$fullCode"');
         continue;
@@ -273,6 +277,19 @@ String? _normalizeRarity(String raw) {
     default:
       return null;
   }
+}
+
+/// Mappe un suffixe de variant Bandai vers un libellé humain.
+/// `_p1` → `Alt Art` · `_p2` → `Alt Art 2` · `_r1` → `Reprint` · `_r2` → `Reprint 2`
+String? _variantLabelFor(String? suffix) {
+  if (suffix == null) return null;
+  final lower = suffix.toLowerCase();
+  if (lower.length < 3) return null;
+  final kind = lower.substring(0, 2); // '_p' ou '_r'
+  final n = lower.substring(2);
+  if (kind == '_p') return n == '1' ? 'Alt Art' : 'Alt Art $n';
+  if (kind == '_r') return n == '1' ? 'Reprint' : 'Reprint $n';
+  return null;
 }
 
 String? _normalizeCardType(String raw) {
@@ -421,11 +438,7 @@ Future<void> main(List<String> args) async {
   for (final c in allCards) {
     final cardId = cardIds[c.baseCode];
     if (cardId == null) continue;
-    final variantLabel = c.isAltArt
-        ? (c.variantSuffix == '_p1'
-            ? 'Alt Art'
-            : 'Alt Art ${c.variantSuffix}')
-        : null;
+    final variantLabel = _variantLabelFor(c.variantSuffix);
     final key = '$cardId|false|${c.isAltArt}|${variantLabel ?? ''}';
     variantRowsByKey[key] = {
       'card_id': cardId,

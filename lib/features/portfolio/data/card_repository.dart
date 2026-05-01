@@ -50,6 +50,43 @@ class CardRepository {
     return result;
   }
 
+  /// Cherche une carte + tous ses variants depuis un code OCR brut (ex
+  /// `OP01-120`). Le suffixe `_pX` est ignoré au lookup (on prend la carte de
+  /// base puis on retourne tous ses variants), pour laisser l'utilisateur
+  /// choisir lui-même via le picker du scanner.
+  Future<({CatalogueCard card, List<CardVariant> variants})?>
+      findCardWithVariantsByCode(String fullCode) async {
+    final match =
+        RegExp(r'^([A-Z]+\d*)-(\d+)(_P\d+)?$', caseSensitive: false)
+            .firstMatch(fullCode.toUpperCase());
+    if (match == null) return null;
+    final setCode = match.group(1)!.toUpperCase();
+    final cardNumber = match.group(2)!;
+
+    final cardRow = await supabase
+        .from('cards')
+        .select()
+        .eq('set_code', setCode)
+        .eq('card_number', cardNumber)
+        .maybeSingle();
+    if (cardRow == null) return null;
+    final card = CatalogueCard.fromMap(Map<String, dynamic>.from(cardRow));
+
+    final variantRows = await supabase
+        .from('card_variants')
+        .select()
+        .eq('card_id', card.id)
+        .order('is_alt_art')
+        .order('is_foil')
+        .order('variant_label');
+    final variants = variantRows
+        .map((row) => CardVariant.fromMap(Map<String, dynamic>.from(row)))
+        .toList();
+    if (variants.isEmpty) return null;
+
+    return (card: card, variants: variants);
+  }
+
   /// Cherche une carte + son variant à partir d'un code OCR (ex `OP01-120` ou
   /// `OP01-051_P1` pour un alt-art). Retourne null si la carte n'est pas dans
   /// le catalogue.

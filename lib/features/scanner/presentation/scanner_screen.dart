@@ -13,6 +13,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/card_art.dart';
 import '../../../core/widgets/delta_badge.dart';
+import '../../portfolio/domain/card_models.dart';
 import '../../portfolio/presentation/portfolio_providers.dart';
 import '../data/ocr_service.dart';
 
@@ -45,7 +46,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   late final AnimationController _beam;
 
   _ScanPhase _phase = _ScanPhase.initializing;
-  CatalogueEntry? _matched;
+  CatalogueCard? _matchedCard;
+  List<CardVariant> _matchedVariants = const [];
+  String? _selectedVariantId;
   bool _adding = false;
   DateTime _lastScanAt = DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -105,7 +108,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     if (code == null || !mounted) return;
 
     final repo = ref.read(cardRepositoryProvider);
-    final found = await repo.findEntryByCode(code);
+    final found = await repo.findCardWithVariantsByCode(code);
     if (!mounted) return;
 
     if (found == null) {
@@ -120,9 +123,16 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     HapticFeedback.mediumImpact();
     await _camera?.stopImageStream();
     if (!mounted) return;
+    // Sélection initiale = base (is_alt_art=false), sinon premier variant.
+    final initial = found.variants.firstWhere(
+      (v) => !v.isAltArt && !v.isFoil,
+      orElse: () => found.variants.first,
+    );
     setState(() {
       _phase = _ScanPhase.matched;
-      _matched = CatalogueEntry(card: found.card, variant: found.variant);
+      _matchedCard = found.card;
+      _matchedVariants = found.variants;
+      _selectedVariantId = initial.id;
     });
   }
 
@@ -130,24 +140,28 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     if (_camera == null || !_camera!.value.isInitialized) return;
     setState(() {
       _phase = _ScanPhase.scanning;
-      _matched = null;
+      _matchedCard = null;
+      _matchedVariants = const [];
+      _selectedVariantId = null;
     });
     if (_camera!.value.isStreamingImages) return;
     await _camera!.startImageStream(_onFrame);
   }
 
   Future<void> _addToCollection() async {
-    final entry = _matched;
-    if (entry == null) return;
+    final card = _matchedCard;
+    final variantId = _selectedVariantId;
+    if (card == null || variantId == null) return;
+    final variant = _matchedVariants.firstWhere((v) => v.id == variantId);
     setState(() => _adding = true);
     try {
       await ref
           .read(collectionRepositoryProvider)
-          .addVariantToCollection(entry.variant.id);
+          .addVariantToCollection(variantId);
       ref.invalidate(collectionProvider);
       if (!mounted) return;
       HapticFeedback.heavyImpact();
-      widget.onAdded(entry);
+      widget.onAdded(CatalogueEntry(card: card, variant: variant));
     } catch (_) {
       if (!mounted) return;
       setState(() => _adding = false);
@@ -222,9 +236,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                     ),
                   ),
                 ),
-                if (_phase == _ScanPhase.matched && _matched != null)
+                if (_phase == _ScanPhase.matched && _matchedCard != null)
                   _MatchSheet(
-                    entry: _matched!,
+                    card: _matchedCard!,
+                    variants: _matchedVariants,
+                    selectedVariantId: _selectedVariantId,
+                    onSelectVariant: (id) =>
+                        setState(() => _selectedVariantId = id),
                     adding: _adding,
                     onSkip: _resumeScan,
                     onAdd: _addToCollection,
@@ -471,20 +489,39 @@ class _Hint extends StatelessWidget {
 
 class _MatchSheet extends StatelessWidget {
   const _MatchSheet({
-    required this.entry,
+    required this.card,
+    required this.variants,
+    required this.selectedVariantId,
+    required this.onSelectVariant,
     required this.adding,
     required this.onSkip,
     required this.onAdd,
   });
 
-  final CatalogueEntry entry;
+  final CatalogueCard card;
+  final List<CardVariant> variants;
+  final String? selectedVariantId;
+  final ValueChanged<String> onSelectVariant;
   final bool adding;
   final VoidCallback onSkip;
   final VoidCallback onAdd;
 
+  String _labelOf(CardVariant v) {
+    if (v.isAltArt && v.variantLabel != null) return v.variantLabel!;
+    if (v.isAltArt) return 'Alt Art';
+    if (v.isFoil) return 'Foil';
+    return 'Standard';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final display = entry.toDisplay();
+    final selected = variants.firstWhere(
+      (v) => v.id == selectedVariantId,
+      orElse: () => variants.first,
+    );
+    final display = CatalogueEntry(card: card, variant: selected).toDisplay();
+    final hasMultiple = variants.length > 1;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       child: Container(
@@ -506,7 +543,7 @@ class _MatchSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        entry.card.name,
+                        card.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.inter(
@@ -518,12 +555,11 @@ class _MatchSheet extends StatelessWidget {
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          Text(entry.card.code,
-                              style: AppTypography.mono(size: 11.5)),
+                          Text(card.code, style: AppTypography.mono(size: 11.5)),
                           const Text(' · ',
                               style: TextStyle(color: AppColors.text3)),
                           Text(
-                            entry.card.setCode,
+                            card.setCode,
                             style: AppTypography.inter(
                               size: 11.5,
                               color: AppColors.text2,
@@ -542,6 +578,73 @@ class _MatchSheet extends StatelessWidget {
                 ),
               ],
             ),
+            // Variant picker (uniquement quand 2+ illustrations existent)
+            if (hasMultiple) ...[
+              const SizedBox(height: 14),
+              Text(
+                'Choisis ton illustration',
+                style: AppTypography.eyebrow(size: 11),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                // 70 (image) + 4 (gap) + ~14 (label, height 1.0) + 8 (padding)
+                // + 4 (bordure 2 + ε arrondi) = 100 px de marge pour éviter
+                // l'overflow quand le label fait 1 ligne.
+                height: 104,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: variants.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (_, i) {
+                    final v = variants[i];
+                    final isSelected = v.id == selectedVariantId;
+                    final thumbDisplay =
+                        CatalogueEntry(card: card, variant: v).toDisplay();
+                    return GestureDetector(
+                      onTap: () => onSelectVariant(v.id),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.gold
+                                : AppColors.line2,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CardArtTile(
+                              card: thumbDisplay,
+                              width: 50,
+                              height: 70,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _labelOf(v),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.inter(
+                                size: 9.5,
+                                weight: FontWeight.w600,
+                                color: isSelected
+                                    ? AppColors.gold
+                                    : AppColors.text2,
+                                letterSpacing: 0.04,
+                                height: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             Row(
               children: [
