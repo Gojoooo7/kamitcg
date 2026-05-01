@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/format.dart';
@@ -84,7 +85,7 @@ class _ScannerScreenState extends State<ScannerScreen>
                       _ScannerCloseButton(onTap: widget.onClose),
                       const Spacer(),
                       Text(
-                        'Scan card',
+                        Strings.scannerTitle,
                         style: AppTypography.inter(
                           size: 13,
                           weight: FontWeight.w600,
@@ -111,9 +112,9 @@ class _ScannerScreenState extends State<ScannerScreen>
                           width: 240,
                           child: Text(
                             switch (_phase) {
-                              _ScanPhase.aiming => 'Center the card inside the frame',
-                              _ScanPhase.detecting => 'Identifying card…',
-                              _ScanPhase.done => 'Match found',
+                              _ScanPhase.aiming => Strings.scannerAiming,
+                              _ScanPhase.detecting => Strings.scannerDetecting,
+                              _ScanPhase.done => Strings.scannerMatchFound,
                             },
                             textAlign: TextAlign.center,
                             style: AppTypography.inter(
@@ -378,6 +379,7 @@ class _MatchSheet extends StatelessWidget {
             Row(
               children: [
                 Expanded(
+                  flex: 5,
                   child: SizedBox(
                     height: 44,
                     child: TextButton(
@@ -391,7 +393,9 @@ class _MatchSheet extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Skip',
+                        Strings.scannerSkip,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: AppTypography.inter(
                           size: 13,
                           weight: FontWeight.w600,
@@ -429,7 +433,7 @@ class _MatchSheet extends StatelessWidget {
                           onTap: onAdd,
                           child: Center(
                             child: Text(
-                              'Add to portfolio',
+                              Strings.scannerAdd,
                               style: AppTypography.inter(
                                 size: 13,
                                 weight: FontWeight.w700,

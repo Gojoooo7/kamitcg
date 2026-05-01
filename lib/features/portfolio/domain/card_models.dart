@@ -1,9 +1,11 @@
 /// Rareté d'une carte. Ordre du plus rare au plus commun.
+/// `label` est la chaîne francophone affichée dans l'UI ; quand l'EN sera ajouté,
+/// migrer vers une lookup via `flutter_localizations`.
 enum CardRarity {
-  mythic('Mythic'),
-  legendary('Legendary'),
+  mythic('Mythique'),
+  legendary('Légendaire'),
   rare('Rare'),
-  common('Common');
+  common('Commun');
 
   const CardRarity(this.label);
   final String label;

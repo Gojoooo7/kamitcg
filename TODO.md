@@ -45,13 +45,17 @@
 
 ## Phase 2 — Auth & Backend Supabase
 
-- [ ] Créer le projet Supabase + stocker URL/anon key dans `.env` (via `flutter_dotenv`)
-- [ ] Schéma SQL initial (`profiles`, `cards`, `card_variants`, `user_collection`, `price_history`, `price_alerts`)
-- [ ] Politiques RLS pour `user_collection` et `price_alerts` (utilisateur ne voit que ses lignes)
+- [x] Créer le projet Supabase + stocker URL/anon key dans `.env` (via `flutter_dotenv`)
+- [x] MCP Supabase connecté côté Claude Code (lecture/migrations)
+- [x] Schéma SQL initial (migration `initial_schema`) — `profiles`, `cards`, `card_variants`, `user_collection`, `price_history`, `price_alerts`
+- [x] Politiques RLS deny-all par défaut + policies explicites par table (CLAUDE.md)
+- [x] Triggers : `handle_new_user` (auto-profile à l'inscription), `protect_premium_until`, `touch_updated_at` × 2
+- [x] Hardening fonctions (search_path pinné, EXECUTE révoqué sur `handle_new_user`) — `get_advisors security` retourne 0
 - [ ] Écran login / signup — **V1 : magic link email uniquement** (Supabase `signInWithOtp`)
 - [ ] (V2) Ajouter OAuth Google + Sign in with Apple ensemble (guideline App Store 4.8)
 - [ ] Provider Riverpod `authStateProvider`
 - [ ] Garde de routes (redirection si non connecté)
+- [ ] Brancher le client Supabase Flutter au démarrage (chargement `.env` → `Supabase.initialize`)
 
 ## Phase 3 — Scanner OCR
 

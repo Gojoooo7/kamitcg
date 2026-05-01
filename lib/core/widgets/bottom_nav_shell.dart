@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../constants/strings.dart';
 import '../theme/app_colors.dart';
 
 enum AppTab { home, collection, market, profile }
@@ -20,26 +21,15 @@ class BottomNavShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Coller la nav au-dessus de la barre système (gesture bar / 3 boutons),
+    // avec un mini-coussin de 4 px pour éviter qu'elle touche pile la barre.
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: EdgeInsets.only(bottom: safeBottom > 0 ? safeBottom + 4 : 12),
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          // Fade gradient sous la nav
-          IgnorePointer(
-            child: Container(
-              height: 120,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xEB0A0A0B)],
-                  stops: [0.0, 0.6],
-                ),
-              ),
-            ),
-          ),
           // Barre principale
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -108,10 +98,10 @@ class _NavItem {
 }
 
 const _items = <_NavItem>[
-  _NavItem(label: 'Home', icon: Icons.home_rounded),
-  _NavItem(label: 'Collection', icon: Icons.grid_view_rounded),
-  _NavItem(label: 'Market', icon: Icons.show_chart_rounded),
-  _NavItem(label: 'Profile', icon: Icons.person_rounded),
+  _NavItem(label: Strings.navHome, icon: Icons.home_rounded),
+  _NavItem(label: Strings.navCollection, icon: Icons.grid_view_rounded),
+  _NavItem(label: Strings.navMarket, icon: Icons.show_chart_rounded),
+  _NavItem(label: Strings.navProfile, icon: Icons.person_rounded),
 ];
 
 class _NavBtn extends StatelessWidget {

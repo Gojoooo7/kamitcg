@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/format.dart';
@@ -28,10 +29,13 @@ class CardDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Coller la action bar au-dessus de la barre système avec un mini-coussin.
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final double bottomOffset = safeBottom > 0 ? safeBottom + 8 : 16;
     return Stack(
       children: [
         ListView(
-          padding: const EdgeInsets.only(bottom: 120),
+          padding: EdgeInsets.only(bottom: 84 + bottomOffset),
           physics: const BouncingScrollPhysics(),
           children: [
             _Header(onBack: onBack),
@@ -41,11 +45,11 @@ class CardDetailScreen extends StatelessWidget {
             _Stats(card: card),
           ],
         ),
-        const Positioned(
+        Positioned(
           left: 0,
           right: 0,
-          bottom: 24,
-          child: _ActionBar(),
+          bottom: bottomOffset,
+          child: const _ActionBar(),
         ),
       ],
     );
@@ -142,7 +146,7 @@ class _Meta extends StatelessWidget {
               Text(card.code, style: AppTypography.mono(size: 12)),
               const Text(' · ', style: TextStyle(color: AppColors.text3)),
               Text(
-                '${card.set} set',
+                Strings.detailSetSuffix(card.set),
                 style: AppTypography.inter(size: 12, color: AppColors.text2),
               ),
               const Text(' · ', style: TextStyle(color: AppColors.text3)),
@@ -181,7 +185,10 @@ class _Meta extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Floor €${Format.intGrouped(card.low.round())} · Ceiling €${Format.intGrouped(card.high.round())}',
+            Strings.floorCeiling(
+              Format.intGrouped(card.low.round()),
+              Format.intGrouped(card.high.round()),
+            ),
             style: AppTypography.inter(size: 12, color: AppColors.text2),
           ),
         ],
@@ -217,12 +224,14 @@ class _History extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  'PRICE HISTORY · 30D',
+                  Strings.priceHistoryTitle,
                   style: AppTypography.eyebrow(size: 11),
                 ),
                 const Spacer(),
                 Text(
-                  'High €${Format.intGrouped(pts.reduce(math.max).round())}',
+                  Strings.detailHigh(
+                    Format.intGrouped(pts.reduce(math.max).round()),
+                  ),
                   style: AppTypography.inter(
                     size: 11,
                     weight: FontWeight.w600,
@@ -253,9 +262,19 @@ class _Stats extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: StatTile(label: 'Quantity', value: '× ${card.qty}')),
+              Expanded(
+                child: StatTile(
+                  label: Strings.detailQuantity,
+                  value: '× ${card.qty}',
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: StatTile(label: 'Holding', value: card.hold)),
+              Expanded(
+                child: StatTile(
+                  label: Strings.detailHolding,
+                  value: card.hold,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -263,14 +282,14 @@ class _Stats extends StatelessWidget {
             children: [
               Expanded(
                 child: StatTile(
-                  label: 'Cost basis',
+                  label: Strings.detailCostBasis,
                   value: Format.money(card.value * 0.62),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: StatTile(
-                  label: 'Unrealized',
+                  label: Strings.detailUnrealized,
                   value: Format.money(unrealized, sign: true),
                   accent: AppColors.up,
                 ),
@@ -293,6 +312,7 @@ class _ActionBar extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
+            flex: 5,
             child: SizedBox(
               height: 52,
               child: TextButton(
@@ -306,7 +326,9 @@ class _ActionBar extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'List for sale',
+                  Strings.detailListForSale,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.inter(
                     size: 14,
                     weight: FontWeight.w600,
@@ -344,7 +366,7 @@ class _ActionBar extends StatelessWidget {
                     onTap: () {},
                     child: Center(
                       child: Text(
-                        'Track price',
+                        Strings.detailTrackPrice,
                         style: AppTypography.inter(
                           size: 14,
                           weight: FontWeight.w700,

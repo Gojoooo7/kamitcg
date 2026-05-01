@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/format.dart';
@@ -23,11 +24,13 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String _range = '1W';
+  String _range = '1S';
 
   @override
   Widget build(BuildContext context) {
-    final points = MockPortfolio.chartSeries[_range]!;
+    // 'TOUT' n'a pas de série dédiée — on retombe sur '1A'.
+    final points = MockPortfolio.chartSeries[_range] ??
+        MockPortfolio.chartSeries['1A']!;
     final up = points.last >= points.first;
 
     return ListView(
@@ -72,7 +75,7 @@ class _GreetingRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back,',
+                  Strings.welcomeBack,
                   style: AppTypography.inter(
                     size: 13,
                     color: AppColors.text2,
@@ -81,7 +84,7 @@ class _GreetingRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Nakama',
+                  Strings.userDisplayName,
                   style: AppTypography.inter(
                     size: 15,
                     color: AppColors.text1,
@@ -153,7 +156,7 @@ class _BalanceBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'PORTFOLIO VALUE',
+            Strings.portfolioValueLabel,
             style: AppTypography.eyebrow(size: 12),
           ),
           const SizedBox(height: 8),
@@ -199,7 +202,7 @@ class _BalanceBlock extends StatelessWidget {
               DeltaBadge(value: delta, pct: deltaPct, size: DeltaBadgeSize.lg),
               const SizedBox(width: 10),
               Text(
-                'last 24h',
+                Strings.last24h,
                 style: AppTypography.inter(
                   size: 12,
                   color: AppColors.text2,
@@ -226,14 +229,9 @@ class _ChartBlock extends StatelessWidget {
   final bool up;
   final ValueChanged<String> onRangeChange;
 
-  static const _tabs = ['1D', '1W', '1M', '1Y', 'ALL'];
+  static List<String> get _tabs => Strings.rangeTabs;
 
-  String get _hoverLabel => switch (range) {
-        '1D' => '14:00',
-        '1W' => 'Wed',
-        '1M' => 'Apr 14',
-        _ => 'Aug 25',
-      };
+  String get _hoverLabel => Strings.hoverLabelFor(range);
 
   @override
   Widget build(BuildContext context) {
@@ -345,20 +343,26 @@ class _StatsRow extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Row(
         children: [
-          Expanded(child: StatTile(label: 'Cards', value: '38', hint: '6 sets')),
+          Expanded(
+            child: StatTile(
+              label: Strings.statCards,
+              value: '38',
+              hint: Strings.statCardsHint,
+            ),
+          ),
           SizedBox(width: 10),
           Expanded(
             child: StatTile(
-              label: 'Mythics',
+              label: Strings.statMythics,
               value: '3',
-              hint: 'rarest tier',
+              hint: Strings.statMythicsHint,
               accent: AppColors.gold,
             ),
           ),
           SizedBox(width: 10),
           Expanded(
             child: StatTile(
-              label: 'All-time',
+              label: Strings.statAllTime,
               value: '+187%',
               accent: AppColors.up,
             ),
@@ -399,7 +403,7 @@ class _TopPerformers extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Top performers · 24h',
+                  Strings.topPerformersTitle,
                   style: AppTypography.inter(
                     size: 14,
                     weight: FontWeight.w700,
@@ -408,7 +412,7 @@ class _TopPerformers extends StatelessWidget {
                 ),
               ),
               Text(
-                'See all',
+                Strings.seeAll,
                 style: AppTypography.inter(
                   size: 12,
                   color: AppColors.text2,
@@ -512,9 +516,9 @@ class _MarketPulseRow extends StatelessWidget {
   const _MarketPulseRow();
 
   static const _items = [
-    (label: 'Mythic Index', val: '+4.2%', up: true, spark: <double>[10, 12, 11, 14, 13, 15, 17, 16, 19, 21]),
-    (label: 'Aurora Set', val: '+1.8%', up: true, spark: <double>[10, 11, 10, 12, 11, 13, 14, 12, 15, 15]),
-    (label: 'Embergate', val: '−0.7%', up: false, spark: <double>[12, 13, 14, 12, 11, 12, 11, 10, 11, 10]),
+    (label: Strings.marketPulseMythicIndex, val: '+4,2 %', up: true, spark: <double>[10, 12, 11, 14, 13, 15, 17, 16, 19, 21]),
+    (label: Strings.marketPulseAuroraSet, val: '+1,8 %', up: true, spark: <double>[10, 11, 10, 12, 11, 13, 14, 12, 15, 15]),
+    (label: Strings.marketPulseEmbergate, val: '−0,7 %', up: false, spark: <double>[12, 13, 14, 12, 11, 12, 11, 10, 11, 10]),
   ];
 
   @override
@@ -527,7 +531,7 @@ class _MarketPulseRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 20),
             child: Text(
-              'Market pulse',
+              Strings.marketPulseTitle,
               style: AppTypography.inter(
                 size: 14,
                 weight: FontWeight.w700,

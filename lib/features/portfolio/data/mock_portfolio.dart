@@ -9,14 +9,18 @@ class MockPortfolio {
   static const double delta = 120.00;
   static const double deltaPct = 2.91;
 
-  static const List<String> sets = ['All', 'Aurora', 'Tidefall', 'Embergate', 'Ironbloom'];
-  static const List<String> rarities = ['All', 'Mythic', 'Legendary', 'Rare', 'Common'];
+  // 'Tout' est la sentinelle "aucun filtre" — partagée avec Strings.filterAll.
+  // Les noms d'extensions sont des noms propres qu'on ne traduit pas.
+  static const List<String> sets = ['Tout', 'Aurora', 'Tidefall', 'Embergate', 'Ironbloom'];
+  static const List<String> rarities = ['Tout', 'Mythique', 'Légendaire', 'Rare', 'Commun'];
 
+  // Clés alignées sur Strings.rangeTabs ('1J','1S','1M','1A','TOUT').
+  // 'TOUT' n'a pas de série dédiée — on retombe sur '1A' dans le Dashboard.
   static const Map<String, List<double>> chartSeries = {
-    '1D': [4130, 4112, 4140, 4108, 4096, 4118, 4150, 4172, 4160, 4185, 4210, 4198, 4225, 4242, 4250],
-    '1W': [3980, 4010, 4060, 4030, 4015, 4080, 4120, 4090, 4140, 4180, 4205, 4250],
+    '1J': [4130, 4112, 4140, 4108, 4096, 4118, 4150, 4172, 4160, 4185, 4210, 4198, 4225, 4242, 4250],
+    '1S': [3980, 4010, 4060, 4030, 4015, 4080, 4120, 4090, 4140, 4180, 4205, 4250],
     '1M': [3620, 3680, 3710, 3760, 3700, 3820, 3880, 3940, 3980, 4020, 4060, 4100, 4150, 4200, 4250],
-    '1Y': [2100, 2240, 2380, 2510, 2680, 2820, 2750, 2980, 3210, 3380, 3520, 3760, 3980, 4110, 4250],
+    '1A': [2100, 2240, 2380, 2510, 2680, 2820, 2750, 2980, 3210, 3380, 3520, 3760, 3980, 4110, 4250],
   };
 
   static const List<TcgCard> cards = [

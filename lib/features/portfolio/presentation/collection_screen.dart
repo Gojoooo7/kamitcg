@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/format.dart';
@@ -24,8 +25,8 @@ class CollectionScreen extends StatefulWidget {
 
 class _CollectionScreenState extends State<CollectionScreen> {
   final TextEditingController _search = TextEditingController();
-  String _setFilter = 'All';
-  String _rarityFilter = 'All';
+  String _setFilter = Strings.filterAll;
+  String _rarityFilter = Strings.filterAll;
   _SortKey _sort = _SortKey.value;
 
   @override
@@ -44,10 +45,10 @@ class _CollectionScreenState extends State<CollectionScreen> {
               c.code.toLowerCase().contains(q))
           .toList();
     }
-    if (_setFilter != 'All') {
+    if (_setFilter != Strings.filterAll) {
       list = list.where((c) => c.set == _setFilter).toList();
     }
-    if (_rarityFilter != 'All') {
+    if (_rarityFilter != Strings.filterAll) {
       list = list.where((c) => c.rarity.label == _rarityFilter).toList();
     }
     list.sort((a, b) => switch (_sort) {
@@ -93,7 +94,7 @@ class _CollectionScreenState extends State<CollectionScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(24, 60, 24, 0),
             child: Text(
-              'No cards match your search.',
+              Strings.collectionEmpty,
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.text2, fontSize: 13),
             ),
@@ -126,7 +127,7 @@ class _Header extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Collection',
+                  Strings.collectionTitle,
                   style: AppTypography.inter(
                     size: 26,
                     weight: FontWeight.w700,
@@ -142,7 +143,7 @@ class _Header extends StatelessWidget {
           Row(
             children: [
               Text(
-                '$count cards',
+                Strings.collectionCount(count),
                 style: AppTypography.inter(size: 12, color: AppColors.text2),
               ),
               const Text(' · ', style: TextStyle(color: AppColors.text3)),
@@ -193,7 +194,7 @@ class _SearchBar extends StatelessWidget {
                 onChanged: onChanged,
                 style: AppTypography.inter(size: 14, color: AppColors.text0),
                 decoration: InputDecoration.collapsed(
-                  hintText: 'Search by name or code',
+                  hintText: Strings.collectionSearchPlaceholder,
                   hintStyle: AppTypography.inter(
                     size: 14,
                     color: AppColors.text2,
@@ -294,16 +295,16 @@ class _SortBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final opts = <(_SortKey, String)>[
-      (_SortKey.value, 'Value'),
-      (_SortKey.change, '24h'),
-      (_SortKey.name, 'Name'),
-      (_SortKey.rarity, 'Rarity'),
+      (_SortKey.value, Strings.sortValue),
+      (_SortKey.change, Strings.sort24h),
+      (_SortKey.name, Strings.sortName),
+      (_SortKey.rarity, Strings.sortRarity),
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
       child: Row(
         children: [
-          Text('SORT', style: AppTypography.eyebrow(size: 11)),
+          Text(Strings.sortLabel, style: AppTypography.eyebrow(size: 11)),
           const Spacer(),
           for (var i = 0; i < opts.length; i++) ...[
             if (i > 0) const SizedBox(width: 6),
@@ -389,7 +390,7 @@ class _CardRow extends StatelessWidget {
                             borderRadius: BorderRadius.circular(3),
                           ),
                           child: Text(
-                            'FOIL',
+                            Strings.foilTag,
                             style: AppTypography.inter(
                               size: 9,
                               weight: FontWeight.w700,
