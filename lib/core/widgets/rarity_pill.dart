@@ -11,16 +11,46 @@ class RarityPill extends StatelessWidget {
   final bool large;
 
   static ({Color ring, Color text}) _palette(CardRarity r) => switch (r) {
-        CardRarity.mythic =>
-          (ring: AppColors.rarityMythicRing, text: AppColors.rarityMythicText),
-        CardRarity.legendary => (
-            ring: AppColors.rarityLegendaryRing,
-            text: AppColors.rarityLegendaryText
+        CardRarity.secretRare => (
+            ring: AppColors.raritySecretRareRing,
+            text: AppColors.raritySecretRareText,
           ),
-        CardRarity.rare =>
-          (ring: AppColors.rarityRareRing, text: AppColors.rarityRareText),
-        CardRarity.common =>
-          (ring: AppColors.rarityCommonRing, text: AppColors.rarityCommonText),
+        CardRarity.specialAlt => (
+            ring: AppColors.raritySpecialAltRing,
+            text: AppColors.raritySpecialAltText,
+          ),
+        CardRarity.treasureRare => (
+            ring: AppColors.rarityTreasureRareRing,
+            text: AppColors.rarityTreasureRareText,
+          ),
+        CardRarity.superRare => (
+            ring: AppColors.raritySuperRareRing,
+            text: AppColors.raritySuperRareText,
+          ),
+        CardRarity.leader => (
+            ring: AppColors.rarityLeaderRing,
+            text: AppColors.rarityLeaderText,
+          ),
+        CardRarity.rare => (
+            ring: AppColors.rarityRareRing,
+            text: AppColors.rarityRareText,
+          ),
+        CardRarity.uncommon => (
+            ring: AppColors.rarityUncommonRing,
+            text: AppColors.rarityUncommonText,
+          ),
+        CardRarity.common => (
+            ring: AppColors.rarityCommonRing,
+            text: AppColors.rarityCommonText,
+          ),
+        CardRarity.don => (
+            ring: AppColors.rarityDonRing,
+            text: AppColors.rarityDonText,
+          ),
+        CardRarity.promo => (
+            ring: AppColors.rarityPromoRing,
+            text: AppColors.rarityPromoText,
+          ),
       };
 
   @override

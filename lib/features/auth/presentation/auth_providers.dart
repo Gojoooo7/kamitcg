@@ -22,3 +22,9 @@ final currentSessionProvider = Provider<Session?>((ref) {
   ref.watch(authStateProvider);
   return ref.watch(authRepositoryProvider).currentSession;
 });
+
+/// Email de l'utilisateur connecté (null si non connecté).
+final currentUserEmailProvider = Provider<String?>((ref) {
+  final session = ref.watch(currentSessionProvider);
+  return session?.user.email;
+});

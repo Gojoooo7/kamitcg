@@ -17,14 +17,20 @@ import '../domain/card_models.dart';
 class CardDetailScreen extends StatelessWidget {
   const CardDetailScreen({required this.card, required this.onBack, super.key});
 
-  final TcgCard card;
+  final DisplayCard card;
   final VoidCallback onBack;
 
   Color get _ringColor => switch (card.rarity) {
-        CardRarity.mythic => AppColors.rarityMythicRing,
-        CardRarity.legendary => AppColors.rarityLegendaryRing,
+        CardRarity.secretRare => AppColors.raritySecretRareRing,
+        CardRarity.specialAlt => AppColors.raritySpecialAltRing,
+        CardRarity.treasureRare => AppColors.rarityTreasureRareRing,
+        CardRarity.superRare => AppColors.raritySuperRareRing,
+        CardRarity.leader => AppColors.rarityLeaderRing,
         CardRarity.rare => AppColors.rarityRareRing,
+        CardRarity.uncommon => AppColors.rarityUncommonRing,
         CardRarity.common => AppColors.rarityCommonRing,
+        CardRarity.don => AppColors.rarityDonRing,
+        CardRarity.promo => AppColors.rarityPromoRing,
       };
 
   @override
@@ -79,7 +85,7 @@ class _Header extends StatelessWidget {
 
 class _Hero extends StatelessWidget {
   const _Hero({required this.card, required this.ringColor});
-  final TcgCard card;
+  final DisplayCard card;
   final Color ringColor;
 
   @override
@@ -132,7 +138,7 @@ class _Hero extends StatelessWidget {
 
 class _Meta extends StatelessWidget {
   const _Meta({required this.card});
-  final TcgCard card;
+  final DisplayCard card;
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +205,7 @@ class _Meta extends StatelessWidget {
 
 class _History extends StatelessWidget {
   const _History({required this.card});
-  final TcgCard card;
+  final DisplayCard card;
 
   List<double> _series() {
     final base = card.value / (1 + card.change24 / 100);
@@ -251,7 +257,7 @@ class _History extends StatelessWidget {
 
 class _Stats extends StatelessWidget {
   const _Stats({required this.card});
-  final TcgCard card;
+  final DisplayCard card;
 
   @override
   Widget build(BuildContext context) {

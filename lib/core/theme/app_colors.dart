@@ -39,15 +39,27 @@ class AppColors {
   static const Color down = Color(0xFFFF3B5C);
   static const Color downSoft = Color(0x1FFF3B5C); // rgba(255,59,92,0.12)
 
-  // Couleurs de rareté (cf. RARITY_COLORS dans atoms.jsx)
-  static const Color rarityMythicRing = Color(0xFFD4AF37);
-  static const Color rarityMythicText = Color(0xFFF5D67E);
-  static const Color rarityLegendaryRing = Color(0xFFA855F7);
-  static const Color rarityLegendaryText = Color(0xFFD7A6FF);
+  // Couleurs de rareté OPCG (mapping ring/text par rareté pour les pills + bordures de carte).
+  static const Color raritySecretRareRing = Color(0xFFD4AF37);
+  static const Color raritySecretRareText = Color(0xFFF5D67E);
+  static const Color raritySpecialAltRing = Color(0xFFFF4DA6);
+  static const Color raritySpecialAltText = Color(0xFFFFA8D0);
+  static const Color rarityTreasureRareRing = Color(0xFFFF7847);
+  static const Color rarityTreasureRareText = Color(0xFFFFB89A);
+  static const Color raritySuperRareRing = Color(0xFFA855F7);
+  static const Color raritySuperRareText = Color(0xFFD7A6FF);
+  static const Color rarityLeaderRing = Color(0xFFFF8B3D);
+  static const Color rarityLeaderText = Color(0xFFFFC196);
   static const Color rarityRareRing = Color(0xFF5DC2FF);
   static const Color rarityRareText = Color(0xFFA8DCFF);
+  static const Color rarityUncommonRing = Color(0xFF5DC282);
+  static const Color rarityUncommonText = Color(0xFFA8DCB4);
   static const Color rarityCommonRing = Color(0xFF6E6E76);
   static const Color rarityCommonText = Color(0xFFB4B4BA);
+  static const Color rarityDonRing = Color(0xFFFFB347);
+  static const Color rarityDonText = Color(0xFFFFD89E);
+  static const Color rarityPromoRing = Color(0xFFFF6EC4);
+  static const Color rarityPromoText = Color(0xFFFFB0DD);
 
   // Card art gradients (placeholders) — extraits 1:1 de KamiTCG.html
   static const List<Color> artA = [Color(0xFF2A1A4A), Color(0xFF6E29A8), Color(0xFFC084FC)];

@@ -46,6 +46,9 @@ dependencies:
   # Typographies (Inter, Space Grotesk, JetBrains Mono)
   google_fonts: ^8.1.0
 
+  # Cache local des images réseau (illustrations Bandai)
+  cached_network_image: ^3.4.1
+
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -67,6 +70,10 @@ dev_dependencies:
   json_serializable: 6.13.0
 
   build_runner: ^2.15.0
+
+  # Utilisés uniquement par scripts/import_catalogue.dart (one-shot)
+  html: ^0.15.6
+  http: ^1.6.0
 
   flutter_lints: ^6.0.0
 

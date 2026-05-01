@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
@@ -11,61 +12,236 @@ import '../../../core/widgets/line_chart_view.dart';
 import '../../../core/widgets/rarity_pill.dart';
 import '../../../core/widgets/sparkline.dart';
 import '../../../core/widgets/stat_tile.dart';
-import '../data/mock_portfolio.dart';
+import '../../auth/presentation/auth_providers.dart';
 import '../domain/card_models.dart';
+import 'portfolio_providers.dart';
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({required this.onCardTap, super.key});
+class DashboardScreen extends ConsumerStatefulWidget {
+  const DashboardScreen({
+    required this.onCardTap,
+    required this.onAddPressed,
+    super.key,
+  });
 
-  final ValueChanged<TcgCard> onCardTap;
+  final ValueChanged<DisplayCard> onCardTap;
+  final VoidCallback onAddPressed;
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   String _range = '1S';
 
   @override
   Widget build(BuildContext context) {
-    // 'TOUT' n'a pas de série dédiée — on retombe sur '1A'.
-    final points = MockPortfolio.chartSeries[_range] ??
-        MockPortfolio.chartSeries['1A']!;
-    final up = points.last >= points.first;
+    final collectionAsync = ref.watch(collectionProvider);
+
+    return collectionAsync.when(
+      loading: () => const _CenteredSpinner(),
+      error: (e, _) => _ErrorBlock(message: e.toString()),
+      data: (items) {
+        if (items.isEmpty) {
+          return _EmptyState(onAdd: widget.onAddPressed);
+        }
+        return _DashboardContent(
+          items: items,
+          range: _range,
+          onRangeChange: (r) => setState(() => _range = r),
+          onCardTap: widget.onCardTap,
+        );
+      },
+    );
+  }
+}
+
+class _DashboardContent extends ConsumerWidget {
+  const _DashboardContent({
+    required this.items,
+    required this.range,
+    required this.onRangeChange,
+    required this.onCardTap,
+  });
+
+  final List<CollectionItem> items;
+  final String range;
+  final ValueChanged<String> onRangeChange;
+  final ValueChanged<DisplayCard> onCardTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(portfolioStatsProvider).value ??
+        PortfolioStats.empty;
+    final chartAsync = ref.watch(portfolioChartProvider(range));
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 140),
       physics: const BouncingScrollPhysics(),
       children: [
         const _GreetingRow(),
-        const _BalanceBlock(
-          total: MockPortfolio.total,
-          delta: MockPortfolio.delta,
-          deltaPct: MockPortfolio.deltaPct,
+        _BalanceBlock(
+          total: stats.totalValue,
+          delta: stats.delta24h,
+          deltaPct: stats.deltaPct24h,
         ),
         _ChartBlock(
-          range: _range,
-          points: points,
-          up: up,
-          onRangeChange: (r) => setState(() => _range = r),
+          range: range,
+          chartAsync: chartAsync,
+          onRangeChange: onRangeChange,
         ),
         const SizedBox(height: 4),
-        const _StatsRow(),
-        _TopPerformers(
-          cards: MockPortfolio.cards,
-          onCardTap: widget.onCardTap,
-        ),
+        _StatsRow(stats: stats),
+        _TopPerformers(items: items, onCardTap: onCardTap),
         const _MarketPulseRow(),
       ],
     );
   }
 }
 
-class _GreetingRow extends StatelessWidget {
-  const _GreetingRow();
+// ─────────────────────────────────────────────────────────────────────────
+// Empty / loading / error states
+// ─────────────────────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.onAdd});
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 14, 24, 140),
+      physics: const BouncingScrollPhysics(),
+      children: [
+        const _GreetingRow(),
+        const SizedBox(height: 80),
+        Container(
+          width: 96,
+          height: 96,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.goldSoft,
+            border: Border.all(color: AppColors.gold.withAlpha(0x59)),
+          ),
+          child: const Icon(Icons.style_rounded, size: 44, color: AppColors.gold),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          Strings.dashboardEmptyTitle,
+          textAlign: TextAlign.center,
+          style: AppTypography.inter(
+            size: 20,
+            weight: FontWeight.w700,
+            color: AppColors.text0,
+            letterSpacing: -0.02,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            Strings.dashboardEmptyHint,
+            textAlign: TextAlign.center,
+            style: AppTypography.inter(
+              size: 14,
+              color: AppColors.text2,
+              height: 1.4,
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Center(
+          child: SizedBox(
+            height: 52,
+            width: 240,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppColors.gold, AppColors.goldDark],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.gold.withAlpha(0x59),
+                    blurRadius: 22,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: onAdd,
+                  child: Center(
+                    child: Text(
+                      Strings.dashboardEmptyCta,
+                      style: AppTypography.inter(
+                        size: 15,
+                        weight: FontWeight.w700,
+                        color: const Color(0xFF191100),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CenteredSpinner extends StatelessWidget {
+  const _CenteredSpinner();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 28,
+        height: 28,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation(AppColors.gold),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBlock extends StatelessWidget {
+  const _ErrorBlock({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: AppTypography.inter(size: 13, color: AppColors.down),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Sections
+// ─────────────────────────────────────────────────────────────────────────
+
+class _GreetingRow extends ConsumerWidget {
+  const _GreetingRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final email = ref.watch(currentUserEmailProvider);
+    final initials = _initialsFrom(email);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
       child: Row(
@@ -84,7 +260,9 @@ class _GreetingRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  Strings.userDisplayName,
+                  email ?? Strings.userDisplayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.inter(
                     size: 15,
                     color: AppColors.text1,
@@ -121,7 +299,7 @@ class _GreetingRow extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-              'NK',
+              initials,
               style: AppTypography.num(
                 size: 14,
                 weight: FontWeight.w700,
@@ -133,6 +311,12 @@ class _GreetingRow extends StatelessWidget {
       ),
     );
   }
+}
+
+String _initialsFrom(String? email) {
+  if (email == null || email.isEmpty) return 'NK';
+  final letter = email.runes.first;
+  return String.fromCharCode(letter).toUpperCase();
 }
 
 class _BalanceBlock extends StatelessWidget {
@@ -219,73 +403,95 @@ class _BalanceBlock extends StatelessWidget {
 class _ChartBlock extends StatelessWidget {
   const _ChartBlock({
     required this.range,
-    required this.points,
-    required this.up,
+    required this.chartAsync,
     required this.onRangeChange,
   });
 
   final String range;
-  final List<double> points;
-  final bool up;
+  final AsyncValue<List<double>> chartAsync;
   final ValueChanged<String> onRangeChange;
 
   static List<String> get _tabs => Strings.rangeTabs;
 
-  String get _hoverLabel => Strings.hoverLabelFor(range);
-
   @override
   Widget build(BuildContext context) {
-    final hi = (points.length * 0.66).floor().clamp(0, points.length - 1);
-    final hoverPrice = points[hi];
+    final points = chartAsync.value ?? const <double>[];
+    final hasChart = points.length >= 2;
+    final up = hasChart ? points.last >= points.first : true;
+    final hi = hasChart ? (points.length * 0.66).floor().clamp(0, points.length - 1) : 0;
+    final hoverPrice = hasChart ? points[hi] : 0.0;
+
     return Column(
       children: [
         SizedBox(
           height: 180,
-          child: Stack(
-            children: [
-              Positioned(
-                left: 16,
-                right: 16,
-                top: 8,
-                bottom: 0,
-                child: LineChartView(points: points, up: up),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 6,
-                child: Align(
-                  alignment: const Alignment(0.2, 0),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xDB141418),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.line2),
+          child: hasChart
+              ? Stack(
+                  children: [
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      top: 8,
+                      bottom: 0,
+                      child: LineChartView(points: points, up: up),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _hoverLabel.toUpperCase(),
-                          style: AppTypography.eyebrow(size: 9.5),
-                        ),
-                        Text(
-                          '€${Format.intGrouped(hoverPrice.round())}',
-                          style: AppTypography.num(
-                            size: 12,
-                            weight: FontWeight.w600,
-                            color: AppColors.text0,
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 6,
+                      child: Align(
+                        alignment: const Alignment(0.2, 0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xDB141418),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.line2),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                Strings.hoverLabelFor(range).toUpperCase(),
+                                style: AppTypography.eyebrow(size: 9.5),
+                              ),
+                              Text(
+                                '€${Format.intGrouped(hoverPrice.round())}',
+                                style: AppTypography.num(
+                                  size: 12,
+                                  weight: FontWeight.w600,
+                                  color: AppColors.text0,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
+                )
+              : Center(
+                  child: chartAsync.isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(AppColors.gold),
+                          ),
+                        )
+                      : Text(
+                          Strings.dashboardChartEmpty,
+                          style: AppTypography.inter(
+                            size: 12,
+                            color: AppColors.text2,
+                          ),
+                        ),
                 ),
-              ),
-            ],
-          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
@@ -335,36 +541,37 @@ class _ChartBlock extends StatelessWidget {
 }
 
 class _StatsRow extends StatelessWidget {
-  const _StatsRow();
+  const _StatsRow({required this.stats});
+  final PortfolioStats stats;
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Row(
         children: [
           Expanded(
             child: StatTile(
               label: Strings.statCards,
-              value: '38',
-              hint: Strings.statCardsHint,
+              value: '${stats.cardCount}',
+              hint: Strings.statCardsHintWithCount(stats.uniqueSets),
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: StatTile(
-              label: Strings.statMythics,
-              value: '3',
-              hint: Strings.statMythicsHint,
+              label: Strings.statSecretRare,
+              value: '${stats.secretRareCount}',
+              hint: Strings.statSecretRareHint,
               accent: AppColors.gold,
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: StatTile(
               label: Strings.statAllTime,
-              value: '+187%',
-              accent: AppColors.up,
+              value: Format.pct(stats.deltaPct24h),
+              accent: stats.deltaPct24h >= 0 ? AppColors.up : AppColors.down,
             ),
           ),
         ],
@@ -374,15 +581,18 @@ class _StatsRow extends StatelessWidget {
 }
 
 class _TopPerformers extends StatelessWidget {
-  const _TopPerformers({required this.cards, required this.onCardTap});
+  const _TopPerformers({required this.items, required this.onCardTap});
 
-  final List<TcgCard> cards;
-  final ValueChanged<TcgCard> onCardTap;
+  final List<CollectionItem> items;
+  final ValueChanged<DisplayCard> onCardTap;
 
   @override
   Widget build(BuildContext context) {
-    final top = [...cards]..sort((a, b) => b.change24.compareTo(a.change24));
-    final topThree = top.take(3).toList();
+    final sorted = [...items]
+      ..sort((a, b) => (b.change24h ?? 0).compareTo(a.change24h ?? 0));
+    final top = sorted.take(3).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: Column(
@@ -398,7 +608,8 @@ class _TopPerformers extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(Icons.bolt_rounded, size: 13, color: AppColors.gold),
+                child: const Icon(Icons.bolt_rounded,
+                    size: 13, color: AppColors.gold),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -413,17 +624,18 @@ class _TopPerformers extends StatelessWidget {
               ),
               Text(
                 Strings.seeAll,
-                style: AppTypography.inter(
-                  size: 12,
-                  color: AppColors.text2,
-                ),
+                style: AppTypography.inter(size: 12, color: AppColors.text2),
               ),
-              const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.text2),
+              const Icon(Icons.chevron_right_rounded,
+                  size: 14, color: AppColors.text2),
             ],
           ),
           const SizedBox(height: 12),
-          for (final c in topThree) ...[
-            _TopPerformerRow(card: c, onTap: () => onCardTap(c)),
+          for (final c in top) ...[
+            _TopPerformerRow(
+              item: c,
+              onTap: () => onCardTap(c.toDisplay()),
+            ),
             const SizedBox(height: 8),
           ],
         ],
@@ -433,13 +645,14 @@ class _TopPerformers extends StatelessWidget {
 }
 
 class _TopPerformerRow extends StatelessWidget {
-  const _TopPerformerRow({required this.card, required this.onTap});
+  const _TopPerformerRow({required this.item, required this.onTap});
 
-  final TcgCard card;
+  final CollectionItem item;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final display = item.toDisplay();
     return Material(
       color: const Color(0x06FFFFFF),
       borderRadius: BorderRadius.circular(14),
@@ -454,14 +667,14 @@ class _TopPerformerRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              CardArtTile(card: card, width: 42, height: 60),
+              CardArtTile(card: display, width: 42, height: 60),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      card.name,
+                      display.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.inter(
@@ -473,12 +686,9 @@ class _TopPerformerRow extends StatelessWidget {
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        Text(
-                          card.code,
-                          style: AppTypography.mono(size: 11),
-                        ),
+                        Text(display.code, style: AppTypography.mono(size: 11)),
                         const Text(' · ', style: TextStyle(color: AppColors.text3)),
-                        RarityPill(rarity: card.rarity),
+                        RarityPill(rarity: display.rarity),
                       ],
                     ),
                   ],
@@ -489,7 +699,7 @@ class _TopPerformerRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    Format.money(card.value),
+                    Format.money(display.value),
                     style: AppTypography.num(
                       size: 14,
                       weight: FontWeight.w700,
@@ -498,8 +708,8 @@ class _TopPerformerRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   DeltaBadge(
-                    value: card.change24,
-                    pct: card.change24,
+                    value: display.change24,
+                    pct: display.change24,
                     size: DeltaBadgeSize.sm,
                   ),
                 ],
@@ -515,6 +725,8 @@ class _TopPerformerRow extends StatelessWidget {
 class _MarketPulseRow extends StatelessWidget {
   const _MarketPulseRow();
 
+  // V1 : valeurs statiques (placeholder). Sera remplacé par des aggregates SQL
+  // en V2 (ex : indice par set, top movers par rareté).
   static const _items = [
     (label: Strings.marketPulseMythicIndex, val: '+4,2 %', up: true, spark: <double>[10, 12, 11, 14, 13, 15, 17, 16, 19, 21]),
     (label: Strings.marketPulseAuroraSet, val: '+1,8 %', up: true, spark: <double>[10, 11, 10, 12, 11, 13, 14, 12, 15, 15]),
@@ -552,7 +764,10 @@ class _MarketPulseRow extends StatelessWidget {
                 final it = _items[i];
                 return Container(
                   width: 148,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0x06FFFFFF),
                     borderRadius: BorderRadius.circular(14),

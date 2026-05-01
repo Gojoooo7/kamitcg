@@ -5,6 +5,7 @@ analyzer:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
     - "build/**"
+    - "scripts/**"  # CLI tools, print() est légitime
   language:
     strict-casts: true
     strict-inference: true

@@ -1,10 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../features/portfolio/domain/card_models.dart';
 import '../theme/app_colors.dart';
 
-/// Tuile d'illustration placeholder (no IP) — gradient + sigil abstrait.
-/// Reproduit `CardArt` du design (atoms.jsx).
+/// Tuile d'illustration : affiche l'image officielle Bandai (HD ~600×838 px)
+/// quand `card.imageUrl` est renseigné, sinon retombe sur un dégradé + sigil
+/// abstrait (no-IP) qui rappelle la pose du design original.
 class CardArtTile extends StatelessWidget {
   const CardArtTile({
     required this.card,
@@ -14,7 +16,7 @@ class CardArtTile extends StatelessWidget {
     super.key,
   });
 
-  final TcgCard card;
+  final DisplayCard card;
   final double width;
   final double height;
   final bool foilGlow;
@@ -31,10 +33,16 @@ class CardArtTile extends StatelessWidget {
       };
 
   static Color _ringFor(CardRarity r) => switch (r) {
-        CardRarity.mythic => AppColors.rarityMythicRing,
-        CardRarity.legendary => AppColors.rarityLegendaryRing,
+        CardRarity.secretRare => AppColors.raritySecretRareRing,
+        CardRarity.specialAlt => AppColors.raritySpecialAltRing,
+        CardRarity.treasureRare => AppColors.rarityTreasureRareRing,
+        CardRarity.superRare => AppColors.raritySuperRareRing,
+        CardRarity.leader => AppColors.rarityLeaderRing,
         CardRarity.rare => AppColors.rarityRareRing,
+        CardRarity.uncommon => AppColors.rarityUncommonRing,
         CardRarity.common => AppColors.rarityCommonRing,
+        CardRarity.don => AppColors.rarityDonRing,
+        CardRarity.promo => AppColors.rarityPromoRing,
       };
 
   @override
@@ -42,18 +50,12 @@ class CardArtTile extends StatelessWidget {
     final radius = (width * 0.10).clamp(6.0, 24.0);
     final ring = _ringFor(card.rarity);
     final showFoilRing = card.foil && foilGlow;
-    final gradient = _gradientFor(card.art);
 
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: const Alignment(-0.6, -1),
-          end: const Alignment(0.6, 1),
-        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x73000000),
@@ -68,28 +70,13 @@ class CardArtTile extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius - 1),
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            Positioned.fill(
-              child: CustomPaint(painter: _SigilPainter()),
-            ),
-            // Code label en bas
-            Positioned(
-              left: 4,
-              right: 4,
-              bottom: 3,
-              child: Text(
-                card.code,
-                style: TextStyle(
-                  fontFamily: 'JetBrainsMono',
-                  fontSize: (width * 0.13).clamp(7.0, 14.0),
-                  color: const Color(0xC7FFFFFF),
-                  letterSpacing: 0.04,
-                  shadows: const [
-                    Shadow(color: Color(0x80000000), blurRadius: 2, offset: Offset(0, 1)),
-                  ],
-                ),
-              ),
-            ),
+            // Couche image (réelle) ou fallback (gradient + sigil)
+            if (card.imageUrl != null && card.imageUrl!.isNotEmpty)
+              _RealImage(url: card.imageUrl!, fallback: () => _Fallback(card: card))
+            else
+              _Fallback(card: card),
             // Pastille foil
             if (card.foil)
               Positioned(
@@ -114,7 +101,79 @@ class CardArtTile extends StatelessWidget {
   }
 }
 
+class _RealImage extends StatelessWidget {
+  const _RealImage({required this.url, required this.fallback});
+  final String url;
+  final Widget Function() fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      fadeInDuration: const Duration(milliseconds: 180),
+      placeholder: (_, _) => const ColoredBox(color: AppColors.bg2),
+      errorWidget: (_, _, _) => fallback(),
+    );
+  }
+}
+
+class _Fallback extends StatelessWidget {
+  const _Fallback({required this.card});
+  final DisplayCard card;
+
+  @override
+  Widget build(BuildContext context) {
+    final gradient = CardArtTile._gradientFor(card.art);
+    final width = constraints(context);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: gradient,
+              begin: const Alignment(-0.6, -1),
+              end: const Alignment(0.6, 1),
+            ),
+          ),
+        ),
+        const Positioned.fill(child: CustomPaint(painter: _SigilPainter())),
+        Positioned(
+          left: 4,
+          right: 4,
+          bottom: 3,
+          child: Text(
+            card.code,
+            style: TextStyle(
+              fontFamily: 'JetBrainsMono',
+              fontSize: (width * 0.13).clamp(7.0, 14.0),
+              color: const Color(0xC7FFFFFF),
+              letterSpacing: 0.04,
+              shadows: const [
+                Shadow(
+                  color: Color(0x80000000),
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Récupère la largeur disponible — fallback à 56 si pas de contraintes.
+  double constraints(BuildContext context) {
+    final media = MediaQuery.maybeOf(context);
+    return media?.size.width.clamp(56, 240) ?? 56;
+  }
+}
+
 class _SigilPainter extends CustomPainter {
+  const _SigilPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
     // Voile radial pour donner du relief

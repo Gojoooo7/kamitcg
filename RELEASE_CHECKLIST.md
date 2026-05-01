@@ -37,6 +37,7 @@ Checklist à parcourir intégralement **avant chaque soumission** sur l'App Stor
 - [ ] Tokens stockés via `flutter_secure_storage` uniquement (`grep -rn "SharedPreferences" lib/` → aucune occurrence sur des tokens / sessions).
 - [ ] Magic link redirect URLs whitelistées dans le dashboard Supabase (deep link `kamitcg://...` + URL fallback).
 - [ ] **Email OTP Expiration ≤ 600 s** (Dashboard → Auth → Providers → Email). Refuser le défaut 3600 s.
+- [ ] **SMTP custom configuré** (Resend, SendGrid ou autre) — le SMTP par défaut Supabase est limité à ~3 emails/h et ne supporte pas la prod. Domaine d'expédition vérifié (DKIM/SPF/DMARC actifs).
 - [ ] Sign-out purge complète : secure storage vidé, cache local effacé, providers Riverpod réinitialisés.
 - [ ] HTTPS strict : `usesCleartextTraffic="false"` (Android) + ATS strict (iOS Info.plist sans exception).
 - [ ] Certificate pinning actif sur les endpoints sensibles en build release.

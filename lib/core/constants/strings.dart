@@ -25,10 +25,19 @@ class Strings {
 
   // Stats row
   static const String statCards = 'Cartes';
-  static const String statCardsHint = '6 extensions';
-  static const String statMythics = 'Mythiques';
-  static const String statMythicsHint = 'rareté max';
-  static const String statAllTime = 'Tout temps';
+  static String statCardsHintWithCount(int sets) =>
+      sets <= 1 ? '$sets extension' : '$sets extensions';
+  static const String statSecretRare = 'Secret Rare';
+  static const String statSecretRareHint = 'rareté max';
+  static const String statAllTime = 'Variation';
+
+  // Dashboard empty / loading states
+  static const String dashboardEmptyTitle = 'Ta collection commence ici';
+  static const String dashboardEmptyHint =
+      'Ajoute ta première carte pour suivre sa valeur en temps réel.';
+  static const String dashboardEmptyCta = 'Ajouter une carte';
+  static const String dashboardChartEmpty =
+      'Pas encore d’historique sur cette période.';
 
   // Top performers
   static const String topPerformersTitle = 'Top performers · 24 h';
@@ -81,6 +90,18 @@ class Strings {
   static const String navCollection = 'Collection';
   static const String navMarket = 'Marché';
   static const String navProfile = 'Profil';
+
+  // Add card ─────────────────────────────────────────────────────────
+  static const String addCardTitle = 'Ajouter une carte';
+  static const String addCardSearchPlaceholder = 'Nom ou code (ex : OP01-120)';
+  static const String addCardEmpty = 'Aucune carte ne correspond.';
+  static const String addCardAdded = 'Ajouté à ta collection';
+  static const String addCardAddError =
+      'Impossible d’ajouter la carte. Réessaie dans un instant.';
+
+  // Profile ──────────────────────────────────────────────────────────
+  static const String profileSignOut = 'Se déconnecter';
+  static String profileSignedInAs(String email) => 'Connecté en tant que $email';
 
   // Auth ─────────────────────────────────────────────────────────────
   static const String authTitle = 'KamiTCG';

@@ -70,17 +70,17 @@
 
 ## Phase 4 — Portfolio & Dashboard
 
-- [ ] Repository `CollectionRepository` (CRUD Supabase)
-- [ ] Provider `userCollectionProvider`
-- [ ] Écran Dashboard :
-  - [ ] Valeur totale (gros chiffre, devise)
-  - [ ] Delta 24 h / 7 j / 30 j
-  - [ ] Sparkline mini-graphique
-  - [ ] Top 3 movers (hausse + baisse)
-  - [ ] Répartition (donut) par rareté / extension / couleur
-- [ ] Écran liste de la collection (filtres, tri, recherche)
-- [ ] Écran détail carte (photo HD, prix actuel, historique, P&L)
-- [ ] Calcul plus-value (réalisée vs non réalisée)
+- [x] `CardRepository`, `CollectionRepository`, `PriceRepository` (Supabase)
+- [x] Domain models : `CatalogueCard`, `CardVariant`, `CollectionItem`, `DisplayCard`
+- [x] Providers Riverpod : `catalogueProvider`, `collectionProvider`, `portfolioStatsProvider`, `portfolioChartProvider`
+- [x] Seed minimal du catalogue OPCG (15 cartes, 24 variants, 720 points de prix)
+- [x] Écran Dashboard branché sur les providers (+ empty state CTA "Ajouter une carte")
+- [x] Écran Collection branché (filtres set/rareté dynamiques + sort + search)
+- [x] Écran détail carte (déjà branché via DisplayCard)
+- [x] Flow "Ajouter une carte" — browse catalogue + tap = insert dans `user_collection`
+- [x] Sign-out depuis le Profil (purge automatique du secure storage)
+- [ ] Donut répartition (par rareté / extension / couleur) — V2
+- [ ] Calcul plus-value réalisée vs non réalisée — V2
 
 ## Phase 5 — Données de marché
 

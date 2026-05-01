@@ -5,13 +5,19 @@ import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/bottom_nav_shell.dart';
 import '../../../core/widgets/placeholder_screen.dart';
-import '../../scanner/presentation/scanner_screen.dart';
+import '../../profile/presentation/profile_screen.dart';
 import '../domain/card_models.dart';
+import 'add_card_screen.dart';
 import 'card_detail_screen.dart';
 import 'collection_screen.dart';
 import 'dashboard_screen.dart';
 
-/// Coque principale — héberge les 4 onglets, le FAB scan et le détail carte.
+/// Coque principale — héberge les 4 onglets, le FAB d'ajout et le détail carte.
+///
+/// V1 : le FAB ouvre l'écran "Ajouter une carte" (browse catalogue) car le
+/// scanner OCR réel n'est pas encore branché. Quand ML Kit sera intégré, le
+/// FAB rebasculera vers le scanner et l'AddCard restera accessible via l'empty
+/// state du Dashboard / Collection.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -21,16 +27,18 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   AppTab _tab = AppTab.home;
-  TcgCard? _activeCard;
-  bool _scanning = false;
+  DisplayCard? _activeCard;
+  bool _addingCard = false;
 
-  void _openCard(TcgCard c) => setState(() => _activeCard = c);
+  void _openCard(DisplayCard c) => setState(() => _activeCard = c);
   void _closeCard() => setState(() => _activeCard = null);
 
-  void _openScanner() {
+  void _openAddCard() {
     HapticFeedback.lightImpact();
-    setState(() => _scanning = true);
+    setState(() => _addingCard = true);
   }
+
+  void _closeAddCard() => setState(() => _addingCard = false);
 
   Widget _buildBody() {
     if (_activeCard != null) {
@@ -38,29 +46,32 @@ class _HomeShellState extends State<HomeShell> {
     }
     switch (_tab) {
       case AppTab.home:
-        return DashboardScreen(onCardTap: _openCard);
+        return DashboardScreen(
+          onCardTap: _openCard,
+          onAddPressed: _openAddCard,
+        );
       case AppTab.collection:
-        return CollectionScreen(onCardTap: _openCard);
+        return CollectionScreen(
+          onCardTap: _openCard,
+          onAddPressed: _openAddCard,
+        );
       case AppTab.market:
         return const PlaceholderScreen(
           title: Strings.marketTitle,
           subtitle: Strings.marketSubtitle,
         );
       case AppTab.profile:
-        return const PlaceholderScreen(
-          title: Strings.profileTitle,
-          subtitle: Strings.profileSubtitle,
-        );
+        return const ProfileScreen();
     }
   }
 
   bool get _canPopRoot =>
-      !_scanning && _activeCard == null && _tab == AppTab.home;
+      !_addingCard && _activeCard == null && _tab == AppTab.home;
 
   void _handleSystemPop(bool didPop, Object? _) {
     if (didPop) return;
-    if (_scanning) {
-      setState(() => _scanning = false);
+    if (_addingCard) {
+      setState(() => _addingCard = false);
       return;
     }
     if (_activeCard != null) {
@@ -108,8 +119,8 @@ class _HomeShellState extends State<HomeShell> {
             ),
             // Contenu de l'onglet (ou détail)
             Positioned.fill(child: SafeArea(bottom: false, child: _buildBody())),
-            // Bottom nav (cachée en mode détail carte)
-            if (_activeCard == null)
+            // Bottom nav (cachée en mode détail carte ou ajout)
+            if (_activeCard == null && !_addingCard)
               Positioned(
                 left: 0,
                 right: 0,
@@ -117,22 +128,13 @@ class _HomeShellState extends State<HomeShell> {
                 child: BottomNavShell(
                   activeTab: _tab,
                   onTabChanged: (t) => setState(() => _tab = t),
-                  onScanPressed: _openScanner,
+                  onScanPressed: _openAddCard,
                 ),
               ),
-            // Scanner overlay
-            if (_scanning)
+            // Overlay AddCard
+            if (_addingCard)
               Positioned.fill(
-                child: ScannerScreen(
-                  onClose: () => setState(() => _scanning = false),
-                  onScanned: (c) {
-                    HapticFeedback.mediumImpact();
-                    setState(() {
-                      _scanning = false;
-                      _activeCard = c;
-                    });
-                  },
-                ),
+                child: AddCardScreen(onClose: _closeAddCard),
               ),
           ],
         ),

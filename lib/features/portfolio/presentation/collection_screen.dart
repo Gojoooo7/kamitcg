@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,21 +10,26 @@ import '../../../core/widgets/delta_badge.dart';
 import '../../../core/widgets/icon_button_chip.dart';
 import '../../../core/widgets/rarity_pill.dart';
 import '../../../core/widgets/sparkline.dart';
-import '../data/mock_portfolio.dart';
 import '../domain/card_models.dart';
+import 'portfolio_providers.dart';
 
 enum _SortKey { value, change, name, rarity }
 
-class CollectionScreen extends StatefulWidget {
-  const CollectionScreen({required this.onCardTap, super.key});
+class CollectionScreen extends ConsumerStatefulWidget {
+  const CollectionScreen({
+    required this.onCardTap,
+    required this.onAddPressed,
+    super.key,
+  });
 
-  final ValueChanged<TcgCard> onCardTap;
+  final ValueChanged<DisplayCard> onCardTap;
+  final VoidCallback onAddPressed;
 
   @override
-  State<CollectionScreen> createState() => _CollectionScreenState();
+  ConsumerState<CollectionScreen> createState() => _CollectionScreenState();
 }
 
-class _CollectionScreenState extends State<CollectionScreen> {
+class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   final TextEditingController _search = TextEditingController();
   String _setFilter = Strings.filterAll;
   String _rarityFilter = Strings.filterAll;
@@ -35,76 +41,216 @@ class _CollectionScreenState extends State<CollectionScreen> {
     super.dispose();
   }
 
-  List<TcgCard> get _filtered {
-    var list = [...MockPortfolio.cards];
+  List<CollectionItem> _filtered(List<CollectionItem> items) {
+    var list = [...items];
     final q = _search.text.trim().toLowerCase();
     if (q.isNotEmpty) {
       list = list
           .where((c) =>
-              c.name.toLowerCase().contains(q) ||
-              c.code.toLowerCase().contains(q))
+              c.card.name.toLowerCase().contains(q) ||
+              c.card.code.toLowerCase().contains(q))
           .toList();
     }
     if (_setFilter != Strings.filterAll) {
-      list = list.where((c) => c.set == _setFilter).toList();
+      list = list.where((c) => c.card.setCode == _setFilter).toList();
     }
     if (_rarityFilter != Strings.filterAll) {
-      list = list.where((c) => c.rarity.label == _rarityFilter).toList();
+      list = list.where((c) => c.card.rarity.label == _rarityFilter).toList();
     }
     list.sort((a, b) => switch (_sort) {
-          _SortKey.value => b.value.compareTo(a.value),
-          _SortKey.change => b.change24.compareTo(a.change24),
-          _SortKey.name => a.name.compareTo(b.name),
-          _SortKey.rarity => b.rarity.rank.compareTo(a.rarity.rank),
+          _SortKey.value =>
+            (b.currentPrice ?? 0).compareTo(a.currentPrice ?? 0),
+          _SortKey.change =>
+            (b.change24h ?? 0).compareTo(a.change24h ?? 0),
+          _SortKey.name => a.card.name.compareTo(b.card.name),
+          _SortKey.rarity =>
+            b.card.rarity.rank.compareTo(a.card.rarity.rank),
         });
     return list;
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
-    final totalValue =
-        filtered.fold<double>(0, (s, c) => s + c.value * c.qty);
+    final collectionAsync = ref.watch(collectionProvider);
+    return collectionAsync.when(
+      loading: () => const Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation(AppColors.gold),
+          ),
+        ),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            e.toString(),
+            textAlign: TextAlign.center,
+            style: AppTypography.inter(size: 13, color: AppColors.down),
+          ),
+        ),
+      ),
+      data: (items) {
+        if (items.isEmpty) {
+          return _CollectionEmpty(onAdd: widget.onAddPressed);
+        }
+        final filtered = _filtered(items);
+        final totalValue =
+            filtered.fold<double>(0, (s, c) => s + (c.currentPrice ?? 0) * c.quantity);
+        final sets = _availableSets(items);
+        final rarities = _availableRarities(items);
+        return ListView(
+          padding: const EdgeInsets.only(bottom: 140),
+          physics: const BouncingScrollPhysics(),
+          children: [
+            _Header(count: filtered.length, totalValue: totalValue),
+            _SearchBar(
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+            ),
+            _ChipsRow(
+              items: sets,
+              value: _setFilter,
+              accent: AppColors.violet,
+              onChange: (v) => setState(() => _setFilter = v),
+            ),
+            _ChipsRow(
+              items: rarities,
+              value: _rarityFilter,
+              accent: AppColors.gold,
+              onChange: (v) => setState(() => _rarityFilter = v),
+            ),
+            _SortBar(
+              sort: _sort,
+              onChange: (s) => setState(() => _sort = s),
+            ),
+            if (filtered.isEmpty)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(24, 60, 24, 0),
+                child: Text(
+                  Strings.collectionEmpty,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.text2, fontSize: 13),
+                ),
+              )
+            else
+              for (final item in filtered)
+                _CardRow(
+                  item: item,
+                  onTap: () => widget.onCardTap(item.toDisplay()),
+                ),
+          ],
+        );
+      },
+    );
+  }
+
+  List<String> _availableSets(List<CollectionItem> items) {
+    final seen = <String>{};
+    for (final i in items) {
+      seen.add(i.card.setCode);
+    }
+    final sorted = seen.toList()..sort();
+    return [Strings.filterAll, ...sorted];
+  }
+
+  List<String> _availableRarities(List<CollectionItem> items) {
+    final seen = <CardRarity>{};
+    for (final i in items) {
+      seen.add(i.card.rarity);
+    }
+    final sorted = seen.toList()..sort((a, b) => b.rank.compareTo(a.rank));
+    return [Strings.filterAll, for (final r in sorted) r.label];
+  }
+}
+
+class _CollectionEmpty extends StatelessWidget {
+  const _CollectionEmpty({required this.onAdd});
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.only(bottom: 140),
+      padding: const EdgeInsets.fromLTRB(24, 100, 24, 140),
       physics: const BouncingScrollPhysics(),
       children: [
-        _Header(count: filtered.length, totalValue: totalValue),
-        _SearchBar(
-          controller: _search,
-          onChanged: (_) => setState(() {}),
-        ),
-        _ChipsRow(
-          items: MockPortfolio.sets,
-          value: _setFilter,
-          accent: AppColors.violet,
-          onChange: (v) => setState(() => _setFilter = v),
-        ),
-        _ChipsRow(
-          items: MockPortfolio.rarities,
-          value: _rarityFilter,
-          accent: AppColors.gold,
-          onChange: (v) => setState(() => _rarityFilter = v),
-        ),
-        _SortBar(
-          sort: _sort,
-          onChange: (s) => setState(() => _sort = s),
-        ),
-        if (filtered.isEmpty)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(24, 60, 24, 0),
-            child: Text(
-              Strings.collectionEmpty,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.text2, fontSize: 13),
+        Center(
+          child: Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.goldSoft,
+              border: Border.all(color: AppColors.gold.withAlpha(0x59)),
             ),
-          )
-        else
-          for (var i = 0; i < filtered.length; i++)
-            _CardRow(
-              card: filtered[i],
-              onTap: () => widget.onCardTap(filtered[i]),
+            child: const Icon(Icons.style_rounded, size: 44, color: AppColors.gold),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          Strings.dashboardEmptyTitle,
+          textAlign: TextAlign.center,
+          style: AppTypography.inter(
+            size: 20,
+            weight: FontWeight.w700,
+            color: AppColors.text0,
+            letterSpacing: -0.02,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          Strings.dashboardEmptyHint,
+          textAlign: TextAlign.center,
+          style: AppTypography.inter(
+            size: 14,
+            color: AppColors.text2,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Center(
+          child: SizedBox(
+            height: 52,
+            width: 240,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppColors.gold, AppColors.goldDark],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.gold.withAlpha(0x59),
+                    blurRadius: 22,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: onAdd,
+                  child: Center(
+                    child: Text(
+                      Strings.dashboardEmptyCta,
+                      style: AppTypography.inter(
+                        size: 15,
+                        weight: FontWeight.w700,
+                        color: const Color(0xFF191100),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
+          ),
+        ),
       ],
     );
   }
@@ -148,15 +294,13 @@ class _Header extends StatelessWidget {
               ),
               const Text(' · ', style: TextStyle(color: AppColors.text3)),
               Text(
-                '€${Format.intGrouped(totalValue.round())}.${(totalValue - totalValue.floor()).toStringAsFixed(2).substring(2)}',
+                Format.money(totalValue),
                 style: AppTypography.num(
                   size: 12,
                   weight: FontWeight.w500,
                   color: AppColors.text1,
                 ),
               ),
-              const Text(' · ', style: TextStyle(color: AppColors.text3)),
-              const DeltaBadge(value: 2.4, pct: 2.4, size: DeltaBadgeSize.sm),
             ],
           ),
         ],
@@ -216,7 +360,8 @@ class _SearchBar extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.close_rounded, size: 12, color: AppColors.text1),
+                  child: const Icon(Icons.close_rounded,
+                      size: 12, color: AppColors.text1),
                 ),
               ),
             const SizedBox(width: 10),
@@ -256,8 +401,9 @@ class _ChipsRow extends StatelessWidget {
         itemBuilder: (_, i) {
           final it = items[i];
           final active = it == value;
-          final accentSoft =
-              accent == AppColors.violet ? AppColors.violetSoft : AppColors.goldSoft;
+          final accentSoft = accent == AppColors.violet
+              ? AppColors.violetSoft
+              : AppColors.goldSoft;
           return GestureDetector(
             onTap: () => onChange(it),
             child: AnimatedContainer(
@@ -311,7 +457,8 @@ class _SortBar extends StatelessWidget {
             GestureDetector(
               onTap: () => onChange(opts[i].$1),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: sort == opts[i].$1
                       ? const Color(0x12FFFFFF)
@@ -328,7 +475,9 @@ class _SortBar extends StatelessWidget {
                   style: AppTypography.inter(
                     size: 11.5,
                     weight: FontWeight.w600,
-                    color: sort == opts[i].$1 ? AppColors.text0 : AppColors.text2,
+                    color: sort == opts[i].$1
+                        ? AppColors.text0
+                        : AppColors.text2,
                   ),
                 ),
               ),
@@ -341,14 +490,15 @@ class _SortBar extends StatelessWidget {
 }
 
 class _CardRow extends StatelessWidget {
-  const _CardRow({required this.card, required this.onTap});
+  const _CardRow({required this.item, required this.onTap});
 
-  final TcgCard card;
+  final CollectionItem item;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final up = card.change24 >= 0;
+    final display = item.toDisplay();
+    final up = display.change24 >= 0;
     final sparkPts = up
         ? <double>[10, 11, 10, 12, 13, 12, 14, 15, 14, 16, 17, 18]
         : <double>[18, 17, 18, 16, 15, 16, 14, 13, 14, 12, 11, 10];
@@ -361,7 +511,7 @@ class _CardRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
           children: [
-            CardArtTile(card: card, width: 48, height: 68),
+            CardArtTile(card: display, width: 48, height: 68),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -371,7 +521,7 @@ class _CardRow extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          card.name,
+                          display.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.inter(
@@ -381,10 +531,11 @@ class _CardRow extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (card.foil) ...[
+                      if (display.foil) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
                             color: AppColors.goldSoft,
                             borderRadius: BorderRadius.circular(3),
@@ -405,17 +556,19 @@ class _CardRow extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(card.code, style: AppTypography.mono(size: 11)),
-                      const Text(' · ', style: TextStyle(color: AppColors.text3)),
+                      Text(display.code, style: AppTypography.mono(size: 11)),
+                      const Text(' · ',
+                          style: TextStyle(color: AppColors.text3)),
                       Text(
-                        '×${card.qty}',
+                        '×${display.qty}',
                         style: AppTypography.inter(
                           size: 11,
                           color: AppColors.text2,
                         ),
                       ),
-                      const Text(' · ', style: TextStyle(color: AppColors.text3)),
-                      RarityPill(rarity: card.rarity),
+                      const Text(' · ',
+                          style: TextStyle(color: AppColors.text3)),
+                      RarityPill(rarity: display.rarity),
                     ],
                   ),
                 ],
@@ -428,7 +581,7 @@ class _CardRow extends StatelessWidget {
                 Sparkline(points: sparkPts, up: up, width: 50, height: 18),
                 const SizedBox(height: 4),
                 Text(
-                  Format.money(card.value),
+                  Format.money(display.value),
                   style: AppTypography.num(
                     size: 14,
                     weight: FontWeight.w700,
@@ -437,8 +590,8 @@ class _CardRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 DeltaBadge(
-                  value: card.change24,
-                  pct: card.change24,
+                  value: display.change24,
+                  pct: display.change24,
                   size: DeltaBadgeSize.sm,
                 ),
               ],
