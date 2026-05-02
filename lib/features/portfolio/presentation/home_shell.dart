@@ -68,6 +68,7 @@ class _HomeShellState extends State<HomeShell> {
         return DashboardScreen(
           onCardTap: _openCard,
           onAddPressed: _openAddCard,
+          onSeeAllPressed: () => setState(() => _tab = AppTab.collection),
         );
       case AppTab.collection:
         return CollectionScreen(

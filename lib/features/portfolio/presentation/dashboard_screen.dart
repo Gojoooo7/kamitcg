@@ -20,11 +20,13 @@ class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({
     required this.onCardTap,
     required this.onAddPressed,
+    required this.onSeeAllPressed,
     super.key,
   });
 
   final ValueChanged<DisplayCard> onCardTap;
   final VoidCallback onAddPressed;
+  final VoidCallback onSeeAllPressed;
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -49,6 +51,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           range: _range,
           onRangeChange: (r) => setState(() => _range = r),
           onCardTap: widget.onCardTap,
+          onSeeAllPressed: widget.onSeeAllPressed,
         );
       },
     );
@@ -61,12 +64,14 @@ class _DashboardContent extends ConsumerWidget {
     required this.range,
     required this.onRangeChange,
     required this.onCardTap,
+    required this.onSeeAllPressed,
   });
 
   final List<CollectionItem> items;
   final String range;
   final ValueChanged<String> onRangeChange;
   final ValueChanged<DisplayCard> onCardTap;
+  final VoidCallback onSeeAllPressed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -91,7 +96,11 @@ class _DashboardContent extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         _StatsRow(stats: stats),
-        _TopPerformers(items: items, onCardTap: onCardTap),
+        _TopPerformers(
+          items: items,
+          onCardTap: onCardTap,
+          onSeeAllPressed: onSeeAllPressed,
+        ),
         const _MarketPulseRow(),
       ],
     );
@@ -548,43 +557,54 @@ class _StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: StatTile(
-              label: Strings.statCards,
-              value: '${stats.cardCount}',
-              hint: Strings.statCardsHintWithCount(stats.uniqueSets),
+      // IntrinsicHeight + hint partout pour que les 3 tuiles aient la même
+      // hauteur (sinon "Variation" sans hint est plus courte).
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: StatTile(
+                label: Strings.statCards,
+                value: '${stats.cardCount}',
+                hint: Strings.statCardsHintWithCount(stats.uniqueSets),
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: StatTile(
-              label: Strings.statSecretRare,
-              value: '${stats.secretRareCount}',
-              hint: Strings.statSecretRareHint,
-              accent: AppColors.gold,
+            const SizedBox(width: 10),
+            Expanded(
+              child: StatTile(
+                label: Strings.statSecretRare,
+                value: '${stats.secretRareCount}',
+                hint: Strings.statSecretRareHint,
+                accent: AppColors.gold,
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: StatTile(
-              label: Strings.statAllTime,
-              value: Format.pct(stats.deltaPct24h),
-              accent: stats.deltaPct24h >= 0 ? AppColors.up : AppColors.down,
+            const SizedBox(width: 10),
+            Expanded(
+              child: StatTile(
+                label: Strings.statAllTime,
+                value: Format.pct(stats.deltaPct24h),
+                hint: Strings.statAllTimeHint,
+                accent: stats.deltaPct24h >= 0 ? AppColors.up : AppColors.down,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class _TopPerformers extends StatelessWidget {
-  const _TopPerformers({required this.items, required this.onCardTap});
+  const _TopPerformers({
+    required this.items,
+    required this.onCardTap,
+    required this.onSeeAllPressed,
+  });
 
   final List<CollectionItem> items;
   final ValueChanged<DisplayCard> onCardTap;
+  final VoidCallback onSeeAllPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -622,12 +642,30 @@ class _TopPerformers extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                Strings.seeAll,
-                style: AppTypography.inter(size: 12, color: AppColors.text2),
+              InkWell(
+                onTap: onSeeAllPressed,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        Strings.seeAll,
+                        style: AppTypography.inter(
+                          size: 12,
+                          color: AppColors.text2,
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded,
+                          size: 14, color: AppColors.text2),
+                    ],
+                  ),
+                ),
               ),
-              const Icon(Icons.chevron_right_rounded,
-                  size: 14, color: AppColors.text2),
             ],
           ),
           const SizedBox(height: 12),

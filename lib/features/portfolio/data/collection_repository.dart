@@ -73,6 +73,14 @@ class CollectionRepository {
     return supabase.from('user_collection').delete().eq('id', collectionItemId);
   }
 
+  /// Suppression batch — utilisé par la multi-sélection de la Collection.
+  /// La RLS `auth.uid() = user_id` garantit qu'on ne peut supprimer que
+  /// ses propres lignes.
+  Future<void> removeManyFromCollection(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await supabase.from('user_collection').delete().inFilter('id', ids);
+  }
+
   /// Met à jour la quantité d'une ligne. Supprime si quantity ≤ 0.
   Future<void> updateQuantity(String collectionItemId, int quantity) async {
     if (quantity <= 0) {

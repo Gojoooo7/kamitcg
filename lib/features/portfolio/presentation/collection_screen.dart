@@ -5,6 +5,7 @@ import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/format.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/card_art.dart';
 import '../../../core/widgets/delta_badge.dart';
 import '../../../core/widgets/filter_chips_row.dart';
@@ -36,10 +37,93 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   String _rarityFilter = Strings.filterAll;
   _SortKey _sort = _SortKey.value;
 
+  // Selection mode (long-press pour entrer, tap toggle, X pour sortir)
+  final Set<String> _selectedIds = <String>{};
+  bool _deleting = false;
+
+  bool get _selectionMode => _selectedIds.isNotEmpty;
+
   @override
   void dispose() {
     _search.dispose();
     super.dispose();
+  }
+
+  void _toggleSelection(String itemId) {
+    setState(() {
+      if (_selectedIds.contains(itemId)) {
+        _selectedIds.remove(itemId);
+      } else {
+        _selectedIds.add(itemId);
+      }
+    });
+  }
+
+  void _exitSelection() => setState(_selectedIds.clear);
+
+  Future<void> _confirmAndDelete() async {
+    if (_selectedIds.isEmpty) return;
+    final count = _selectedIds.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.bg2,
+        title: Text(
+          Strings.collectionDeleteTitle,
+          style: AppTypography.inter(
+            size: 18,
+            weight: FontWeight.w700,
+            color: AppColors.text0,
+          ),
+        ),
+        content: Text(
+          Strings.collectionDeleteMessage(count),
+          style: AppTypography.inter(size: 14, color: AppColors.text1),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              Strings.collectionDeleteCancel,
+              style: AppTypography.inter(size: 14, color: AppColors.text1),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              Strings.collectionDeleteConfirm,
+              style: AppTypography.inter(
+                size: 14,
+                weight: FontWeight.w600,
+                color: AppColors.down,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _deleting = true);
+    try {
+      await ref
+          .read(collectionRepositoryProvider)
+          .removeManyFromCollection(_selectedIds.toList());
+      ref.invalidate(collectionProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar.success(Strings.collectionDeletedSnack(count)),
+      );
+      setState(() {
+        _selectedIds.clear();
+        _deleting = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _deleting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar.error(Strings.collectionDeleteError),
+      );
+    }
   }
 
   List<CollectionItem> _filtered(List<CollectionItem> items) {
@@ -107,7 +191,15 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           padding: const EdgeInsets.only(bottom: 140),
           physics: const BouncingScrollPhysics(),
           children: [
-            _Header(count: filtered.length, totalValue: totalValue),
+            if (_selectionMode)
+              _SelectionHeader(
+                count: _selectedIds.length,
+                deleting: _deleting,
+                onCancel: _exitSelection,
+                onDelete: _confirmAndDelete,
+              )
+            else
+              _Header(count: filtered.length, totalValue: totalValue),
             _SearchBar(
               controller: _search,
               onChanged: (_) => setState(() {}),
@@ -141,7 +233,16 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               for (final item in filtered)
                 _CardRow(
                   item: item,
-                  onTap: () => widget.onCardTap(item.toDisplay()),
+                  selected: _selectedIds.contains(item.id),
+                  selectionMode: _selectionMode,
+                  onTap: () {
+                    if (_selectionMode) {
+                      _toggleSelection(item.id);
+                    } else {
+                      widget.onCardTap(item.toDisplay());
+                    }
+                  },
+                  onLongPress: () => _toggleSelection(item.id),
                 ),
           ],
         );
@@ -253,6 +354,81 @@ class _CollectionEmpty extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SelectionHeader extends StatelessWidget {
+  const _SelectionHeader({
+    required this.count,
+    required this.deleting,
+    required this.onCancel,
+    required this.onDelete,
+  });
+
+  final int count;
+  final bool deleting;
+  final VoidCallback onCancel;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+      child: Row(
+        children: [
+          IconButtonChip(
+            icon: Icons.close_rounded,
+            onTap: deleting ? null : onCancel,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              Strings.collectionSelected(count),
+              style: AppTypography.inter(
+                size: 18,
+                weight: FontWeight.w700,
+                color: AppColors.text0,
+                letterSpacing: -0.02,
+              ),
+            ),
+          ),
+          deleting
+              ? const SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(AppColors.down),
+                      ),
+                    ),
+                  ),
+                )
+              : Material(
+                  color: AppColors.down.withAlpha(0x1F),
+                  shape: const CircleBorder(
+                    side: BorderSide(color: AppColors.line2),
+                  ),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: onDelete,
+                    child: const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 20,
+                        color: AppColors.down,
+                      ),
+                    ),
+                  ),
+                ),
+        ],
+      ),
     );
   }
 }
@@ -434,10 +610,19 @@ class _SortBar extends StatelessWidget {
 }
 
 class _CardRow extends StatelessWidget {
-  const _CardRow({required this.item, required this.onTap});
+  const _CardRow({
+    required this.item,
+    required this.selected,
+    required this.selectionMode,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   final CollectionItem item;
+  final bool selected;
+  final bool selectionMode;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -448,14 +633,44 @@ class _CardRow extends StatelessWidget {
         : <double>[18, 17, 18, 16, 15, 16, 14, 13, 14, 12, 11, 10];
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.line)),
+        decoration: BoxDecoration(
+          border: const Border(top: BorderSide(color: AppColors.line)),
+          color: selected ? AppColors.goldSoft : null,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
           children: [
-            CardArtTile(card: display, width: 48, height: 68),
+            Stack(
+              children: [
+                CardArtTile(card: display, width: 48, height: 68),
+                if (selectionMode)
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: selected ? AppColors.gold : AppColors.bg2,
+                        border: Border.all(
+                          color: selected ? AppColors.gold : AppColors.line2,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: selected
+                          ? const Icon(
+                              Icons.check_rounded,
+                              size: 14,
+                              color: Color(0xFF191100),
+                            )
+                          : null,
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

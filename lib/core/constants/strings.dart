@@ -30,6 +30,7 @@ class Strings {
   static const String statSecretRare = 'Secret Rare';
   static const String statSecretRareHint = 'rareté max';
   static const String statAllTime = 'Variation';
+  static const String statAllTimeHint = 'sur 24 h';
 
   // Dashboard empty / loading states
   static const String dashboardEmptyTitle = 'Ta collection commence ici';
@@ -59,6 +60,18 @@ class Strings {
   static const String sortName = 'Nom';
   static const String sortRarity = 'Rareté';
   static String collectionCount(int n) => n == 1 ? '1 carte' : '$n cartes';
+  static String collectionSelected(int n) =>
+      n == 1 ? '1 sélectionnée' : '$n sélectionnées';
+  static const String collectionDeleteTitle = 'Supprimer ?';
+  static String collectionDeleteMessage(int n) => n == 1
+      ? 'Cette carte sera retirée de ta collection.'
+      : 'Ces $n cartes seront retirées de ta collection.';
+  static const String collectionDeleteConfirm = 'Supprimer';
+  static const String collectionDeleteCancel = 'Annuler';
+  static String collectionDeletedSnack(int n) =>
+      n == 1 ? '1 carte supprimée' : '$n cartes supprimées';
+  static const String collectionDeleteError =
+      'Suppression impossible. Réessaie dans un instant.';
   static const String foilTag = 'FOIL';
 
   // Filter "all" sentinel — partagé entre extensions et raretés
