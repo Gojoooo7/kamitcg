@@ -6,6 +6,7 @@ import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/format.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../domain/card_models.dart';
 import '../domain/price_alert.dart';
@@ -92,7 +93,7 @@ class _PriceAlertSheetState extends ConsumerState<PriceAlertSheet> {
           );
       ref.invalidate(priceAlertsForVariantProvider(widget.variant.id));
       if (!mounted) return;
-      HapticFeedback.lightImpact();
+      Haptics.light(ref);
       ScaffoldMessenger.of(context).showSnackBar(
         AppSnackBar.success(Strings.alertsCreated),
       );

@@ -9,6 +9,7 @@ import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/format.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/card_art.dart';
 import '../../../core/widgets/delta_badge.dart';
@@ -605,7 +606,7 @@ class _PositionEditorState extends ConsumerState<_PositionEditor> {
   void _changeQty(int delta) {
     final next = (_pendingQty + delta).clamp(0, 9999);
     setState(() => _pendingQty = next);
-    HapticFeedback.selectionClick();
+    Haptics.selection(ref);
     _qtyDebounce?.cancel();
     _qtyDebounce = Timer(const Duration(milliseconds: 400), _flushQty);
   }

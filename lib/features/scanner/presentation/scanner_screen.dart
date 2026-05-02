@@ -3,13 +3,13 @@ import 'dart:io' show Platform;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/card_art.dart';
 import '../../../core/widgets/delta_badge.dart';
@@ -121,7 +121,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     }
 
     // Match — on stoppe le stream pour libérer le CPU pendant la modale.
-    HapticFeedback.mediumImpact();
+    Haptics.medium(ref);
     await _camera?.stopImageStream();
     if (!mounted) return;
     // Sélection initiale = base (is_alt_art=false), sinon premier variant.
@@ -161,7 +161,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
           .addVariantToCollection(variantId);
       ref.invalidate(collectionProvider);
       if (!mounted) return;
-      HapticFeedback.heavyImpact();
+      Haptics.heavy(ref);
       widget.onAdded(CatalogueEntry(card: card, variant: variant));
     } catch (_) {
       if (!mounted) return;

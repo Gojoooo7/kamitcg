@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/bottom_nav_shell.dart';
-import '../../../core/widgets/placeholder_screen.dart';
+import '../../market/presentation/market_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../scanner/presentation/scanner_screen.dart';
 import 'add_card_screen.dart';
@@ -20,14 +21,14 @@ import 'dashboard_screen.dart';
 /// basculer sur l'AddCardScreen pour saisir une carte manuellement (utile
 /// quand la lumière est mauvaise ou la carte abîmée). L'AddCardScreen est
 /// aussi accessible via l'empty state du Dashboard / Collection.
-class HomeShell extends StatefulWidget {
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends ConsumerState<HomeShell> {
   AppTab _tab = AppTab.home;
   String? _activeCardId;
   bool _scanning = false;
@@ -37,14 +38,14 @@ class _HomeShellState extends State<HomeShell> {
   void _closeCard() => setState(() => _activeCardId = null);
 
   void _openScanner() {
-    HapticFeedback.lightImpact();
+    Haptics.light(ref);
     setState(() => _scanning = true);
   }
 
   void _closeScanner() => setState(() => _scanning = false);
 
   void _openAddCard() {
-    HapticFeedback.lightImpact();
+    Haptics.light(ref);
     setState(() => _addingCard = true);
   }
 
@@ -78,10 +79,7 @@ class _HomeShellState extends State<HomeShell> {
           onAddPressed: _openAddCard,
         );
       case AppTab.market:
-        return const PlaceholderScreen(
-          title: Strings.marketTitle,
-          subtitle: Strings.marketSubtitle,
-        );
+        return const MarketScreen();
       case AppTab.profile:
         return const ProfileScreen();
     }

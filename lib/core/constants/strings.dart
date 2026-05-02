@@ -250,6 +250,13 @@ class Strings {
   static const String marketTitle = 'Marché';
   static const String marketSubtitle =
       'Extensions tendance, indice mythique et prix planchers en direct';
+  static const String marketTopGainers = 'TOP GAGNANTS · 24 H';
+  static const String marketTopLosers = 'TOP PERDANTS · 24 H';
+  static const String marketIndices = 'INDICES PAR EXTENSION';
+  static const String marketTopExpensive = 'CARTES LES PLUS CHÈRES';
+  static const String marketEmpty = 'Pas encore de données.';
+  static const String marketSyntheticDisclaimer =
+      'Prix synthétiques · sera remplacé par Cardmarket prochainement.';
   static const String profileTitle = 'Profil';
   static const String profileSubtitle =
       'Listes de suivi, alertes et compte';

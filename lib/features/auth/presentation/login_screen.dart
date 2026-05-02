@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
 import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/haptics.dart';
 import 'auth_providers.dart';
 
 /// Phase de l'envoi du magic link.
@@ -43,7 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authRepositoryProvider).sendMagicLink(email);
       if (!mounted) return;
-      HapticFeedback.lightImpact();
+      Haptics.light(ref);
       setState(() {
         _phase = _LinkPhase.sent;
         _lastEmail = email;

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/card_art.dart';
 import '../../../core/widgets/filter_chips_row.dart';
@@ -82,7 +82,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
           .addVariantToCollection(entry.variant.id);
       ref.invalidate(collectionProvider);
       if (!mounted) return;
-      HapticFeedback.mediumImpact();
+      Haptics.medium(ref);
       ScaffoldMessenger.of(context).showSnackBar(
         AppSnackBar.success(Strings.addCardAdded),
       );
