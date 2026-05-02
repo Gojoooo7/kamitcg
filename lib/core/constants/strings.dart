@@ -90,6 +90,41 @@ class Strings {
   static const String detailListForSale = 'Mettre en vente';
   static const String detailTrackPrice = 'Suivre le prix';
 
+  // Édition de position dans la fiche carte
+  static const String detailEditTitle = 'MODIFIER MA POSITION';
+  static const String detailEditQuantity = 'Quantité';
+  static const String detailEditPurchasePrice = 'Prix d’achat unitaire';
+  static const String detailEditPurchasePriceHint = 'Optionnel · pour le P&L';
+  static const String detailEditSavePrice = 'Enregistrer';
+  static const String detailEditDelete = 'Retirer cette carte';
+  static const String detailEditDeleteTitle = 'Retirer cette carte ?';
+  static const String detailEditDeleteMessage =
+      'Cette ligne sera retirée de ta collection.';
+  static const String detailEditPriceSaved = 'Prix d’achat mis à jour.';
+  static const String detailEditQuantitySaved = 'Quantité mise à jour.';
+  static const String detailEditDeleted = 'Carte retirée.';
+  static const String detailEditError = 'Mise à jour impossible.';
+  static const String detailEditPriceInvalid = 'Prix invalide.';
+
+  // Alertes de prix
+  static const String alertsSectionTitle = 'ALERTES DE PRIX';
+  static const String alertsEmpty = 'Aucune alerte active.';
+  static const String alertsAdd = 'Ajouter une alerte';
+  static const String alertsSheetTitle = 'Suivre le prix';
+  static String alertsSheetCurrent(String price) => 'Prix actuel : $price';
+  static const String alertsActiveLabel = 'Mes alertes actives';
+  static const String alertsNewLabel = 'Nouvelle alerte';
+  static const String alertsDirectionAbove = 'Au-dessus de';
+  static const String alertsDirectionBelow = 'En-dessous de';
+  static const String alertsThresholdLabel = 'Seuil';
+  static const String alertsCreate = 'Créer l’alerte';
+  static const String alertsCreated = 'Alerte créée.';
+  static const String alertsDeleted = 'Alerte supprimée.';
+  static const String alertsThresholdInvalid = 'Seuil invalide.';
+  static const String alertsError = 'Action impossible. Réessaie.';
+  static const String alertsNotifsDisclaimer =
+      'Les notifications push arrivent en V2. Tes alertes sont enregistrées.';
+
   // Scanner ──────────────────────────────────────────────────────────
   static const String scannerTitle = 'Scanner une carte';
   static const String scannerAiming = 'Place le code de la carte dans le cadre';

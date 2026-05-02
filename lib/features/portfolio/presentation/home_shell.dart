@@ -8,7 +8,6 @@ import '../../../core/widgets/bottom_nav_shell.dart';
 import '../../../core/widgets/placeholder_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../scanner/presentation/scanner_screen.dart';
-import '../domain/card_models.dart';
 import 'add_card_screen.dart';
 import 'card_detail_screen.dart';
 import 'collection_screen.dart';
@@ -30,12 +29,12 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   AppTab _tab = AppTab.home;
-  DisplayCard? _activeCard;
+  String? _activeCardId;
   bool _scanning = false;
   bool _addingCard = false;
 
-  void _openCard(DisplayCard c) => setState(() => _activeCard = c);
-  void _closeCard() => setState(() => _activeCard = null);
+  void _openCard(String id) => setState(() => _activeCardId = id);
+  void _closeCard() => setState(() => _activeCardId = null);
 
   void _openScanner() {
     HapticFeedback.lightImpact();
@@ -60,8 +59,11 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Widget _buildBody() {
-    if (_activeCard != null) {
-      return CardDetailScreen(card: _activeCard!, onBack: _closeCard);
+    if (_activeCardId != null) {
+      return CardDetailScreen(
+        collectionItemId: _activeCardId!,
+        onBack: _closeCard,
+      );
     }
     switch (_tab) {
       case AppTab.home:
@@ -88,7 +90,7 @@ class _HomeShellState extends State<HomeShell> {
   bool get _canPopRoot =>
       !_scanning &&
       !_addingCard &&
-      _activeCard == null &&
+      _activeCardId == null &&
       _tab == AppTab.home;
 
   void _handleSystemPop(bool didPop, Object? _) {
@@ -101,8 +103,8 @@ class _HomeShellState extends State<HomeShell> {
       setState(() => _addingCard = false);
       return;
     }
-    if (_activeCard != null) {
-      setState(() => _activeCard = null);
+    if (_activeCardId != null) {
+      setState(() => _activeCardId = null);
       return;
     }
     if (_tab != AppTab.home) {
@@ -148,7 +150,7 @@ class _HomeShellState extends State<HomeShell> {
               child: SafeArea(bottom: false, child: _buildBody()),
             ),
             // Bottom nav (cachée en mode détail / scanner / add)
-            if (_activeCard == null && !_scanning && !_addingCard)
+            if (_activeCardId == null && !_scanning && !_addingCard)
               Positioned(
                 left: 0,
                 right: 0,

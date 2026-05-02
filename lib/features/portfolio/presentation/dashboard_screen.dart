@@ -24,7 +24,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
     super.key,
   });
 
-  final ValueChanged<DisplayCard> onCardTap;
+  final ValueChanged<String> onCardTap;
   final VoidCallback onAddPressed;
   final VoidCallback onSeeAllPressed;
 
@@ -70,7 +70,7 @@ class _DashboardContent extends ConsumerWidget {
   final List<CollectionItem> items;
   final String range;
   final ValueChanged<String> onRangeChange;
-  final ValueChanged<DisplayCard> onCardTap;
+  final ValueChanged<String> onCardTap;
   final VoidCallback onSeeAllPressed;
 
   @override
@@ -603,7 +603,7 @@ class _TopPerformers extends StatelessWidget {
   });
 
   final List<CollectionItem> items;
-  final ValueChanged<DisplayCard> onCardTap;
+  final ValueChanged<String> onCardTap;
   final VoidCallback onSeeAllPressed;
 
   @override
@@ -672,7 +672,7 @@ class _TopPerformers extends StatelessWidget {
           for (final c in top) ...[
             _TopPerformerRow(
               item: c,
-              onTap: () => onCardTap(c.toDisplay()),
+              onTap: () => onCardTap(c.id),
             ),
             const SizedBox(height: 8),
           ],

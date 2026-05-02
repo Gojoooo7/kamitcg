@@ -92,6 +92,18 @@ class CollectionRepository {
         .update({'quantity': quantity})
         .eq('id', collectionItemId);
   }
+
+  /// Met à jour le prix d'achat unitaire d'une ligne. `null` = pas de prix
+  /// (la plus-value latente n'est plus calculable pour cette ligne).
+  Future<void> updatePurchasePrice(
+    String collectionItemId,
+    double? price,
+  ) async {
+    await supabase
+        .from('user_collection')
+        .update({'purchase_price': price})
+        .eq('id', collectionItemId);
+  }
 }
 
 /// Ligne brute issue de la requête PostgREST avec les jointures variant + card.

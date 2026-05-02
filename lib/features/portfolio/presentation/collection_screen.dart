@@ -24,7 +24,7 @@ class CollectionScreen extends ConsumerStatefulWidget {
     super.key,
   });
 
-  final ValueChanged<DisplayCard> onCardTap;
+  final ValueChanged<String> onCardTap;
   final VoidCallback onAddPressed;
 
   @override
@@ -239,7 +239,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     if (_selectionMode) {
                       _toggleSelection(item.id);
                     } else {
-                      widget.onCardTap(item.toDisplay());
+                      widget.onCardTap(item.id);
                     }
                   },
                   onLongPress: () => _toggleSelection(item.id),

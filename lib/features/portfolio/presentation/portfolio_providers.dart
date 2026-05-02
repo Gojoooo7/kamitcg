@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/presentation/auth_providers.dart';
 import '../data/card_repository.dart';
 import '../data/collection_repository.dart';
+import '../data/price_alerts_repository.dart';
 import '../data/price_repository.dart';
 import '../domain/card_models.dart';
+import '../domain/price_alert.dart';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Repositories (singletons)
@@ -19,6 +21,17 @@ final collectionRepositoryProvider = Provider<CollectionRepository>((_) {
 
 final priceRepositoryProvider = Provider<PriceRepository>((_) {
   return PriceRepository();
+});
+
+final priceAlertsRepositoryProvider = Provider<PriceAlertsRepository>((_) {
+  return PriceAlertsRepository();
+});
+
+/// Liste des alertes de prix de l'utilisateur pour un variant donné.
+/// Family key = variantId.
+final priceAlertsForVariantProvider =
+    FutureProvider.family<List<PriceAlert>, String>((ref, variantId) {
+  return ref.watch(priceAlertsRepositoryProvider).listForVariant(variantId);
 });
 
 // ─────────────────────────────────────────────────────────────────────────
