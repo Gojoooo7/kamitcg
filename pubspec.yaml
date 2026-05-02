@@ -49,6 +49,12 @@ dependencies:
   # Cache local des images réseau (illustrations Bandai)
   cached_network_image: ^3.4.1
 
+  # Préférences utilisateur non-sensibles (toggles UI, devise par défaut)
+  shared_preferences: ^2.5.5
+
+  # Ouverture de liens externes (CGU, politique de confidentialité)
+  url_launcher: ^6.3.2
+
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

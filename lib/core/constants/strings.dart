@@ -124,6 +124,74 @@ class Strings {
   // Profile ──────────────────────────────────────────────────────────
   static const String profileSignOut = 'Se déconnecter';
   static String profileSignedInAs(String email) => 'Connecté en tant que $email';
+  static String profileMemberSince(String date) => 'Membre depuis le $date';
+  static const String profileMemberSinceUnknown = 'Membre récent';
+
+  // Premium card
+  static const String premiumSectionTitle = 'PLAN';
+  static const String premiumFreeLabel = 'Plan gratuit';
+  static const String premiumActiveLabel = 'Premium actif';
+  static String premiumProgress(int current, int max) =>
+      '$current / $max cartes';
+  static const String premiumPerksHeader = 'Avec Premium :';
+  static const String premiumPerk1 = 'Cartes illimitées dans le portefeuille';
+  static const String premiumPerk2 = 'Alertes de prix en temps réel';
+  static const String premiumPerk3 = 'Sync multi-appareils';
+  static const String premiumPerk4 = 'Statistiques de plus-value avancées';
+  static const String premiumCta = 'Passer en Premium · 4,99 €/mois';
+  static const String premiumComingSoon = 'Bientôt disponible';
+  static const String premiumManage = 'Gérer mon abonnement';
+  static String premiumExpires(String date) => 'Renouvellement le $date';
+
+  // Stats section
+  static const String profileStatsTitle = 'MES STATISTIQUES';
+  static const String profileStatCards = 'Cartes';
+  static const String profileStatValue = 'Valeur';
+  static const String profileStatSets = 'Extensions';
+  static const String profileStatPnl = 'Plus-value';
+  static const String profileStatPnlNoBasis = '—';
+
+  // Préférences
+  static const String profilePrefsTitle = 'PRÉFÉRENCES';
+  static const String profilePrefCurrency = 'Devise';
+  static const String profilePrefCurrencySoon = 'Modifiable bientôt';
+  static const String profilePrefNotifications = 'Notifications';
+  static const String profilePrefNotificationsHint = 'Alertes de prix Premium';
+  static const String profilePrefHaptics = 'Retours haptiques';
+  static const String profilePrefHapticsHint =
+      'Vibrations sur scan, ajout, etc.';
+
+  // Données
+  static const String profileDataTitle = 'DONNÉES';
+  static const String profileExport = 'Exporter ma collection';
+  static const String profileExportHint = 'Copier au format CSV';
+  static const String profileExportEmpty = 'Aucune carte à exporter.';
+  static const String profileExportSuccess =
+      'CSV copié dans le presse-papiers.';
+  static const String profileClearCollection = 'Vider ma collection';
+  static const String profileClearCollectionHint = 'Toutes les cartes seront retirées';
+  static const String profileClearTitle = 'Vider la collection ?';
+  static String profileClearMessage(int n) => n == 1
+      ? 'Cette carte sera retirée définitivement.'
+      : 'Tes $n cartes seront retirées définitivement.';
+  static const String profileClearConfirm = 'Tout supprimer';
+  static const String profileClearedSuccess = 'Collection vidée.';
+
+  // Compte / Support
+  static const String profileAccountTitle = 'COMPTE & SUPPORT';
+  static const String profilePrivacy = 'Politique de confidentialité';
+  static const String profileTerms = 'Conditions d’utilisation';
+  static const String profileVersion = 'Version';
+  static const String profileDelete = 'Supprimer mon compte';
+  static const String profileDeleteHint = 'Action définitive';
+  static const String profileDeleteTitle = 'Supprimer mon compte ?';
+  static const String profileDeleteMessage =
+      'Cette action est irréversible. Toutes tes cartes, alertes et données seront définitivement effacées.';
+  static const String profileDeleteConfirm = 'Tout supprimer';
+  static const String profileDeleteError =
+      'Suppression impossible. Réessaie dans un instant.';
+  static const String profileLinkOpenError =
+      'Impossible d’ouvrir le lien. Vérifie ton navigateur.';
 
   // Auth ─────────────────────────────────────────────────────────────
   static const String authTitle = 'KamiTCG';
