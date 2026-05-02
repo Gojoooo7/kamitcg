@@ -13,6 +13,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/card_art.dart';
 import '../../../core/widgets/delta_badge.dart';
+import '../../../core/widgets/image_zoom_dialog.dart';
 import '../../portfolio/domain/card_models.dart';
 import '../../portfolio/presentation/portfolio_providers.dart';
 import '../data/ocr_service.dart';
@@ -226,14 +227,18 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                 _TopBar(onClose: widget.onClose),
                 Expanded(
                   child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _Viewfinder(phase: _phase, beam: _beam),
-                        const SizedBox(height: 20),
-                        _Hint(phase: _phase),
-                      ],
-                    ),
+                    child: _phase == _ScanPhase.matched
+                        // Le match sheet bas porte toute l'info utile, on
+                        // libère la place verticale.
+                        ? const SizedBox.shrink()
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _Viewfinder(phase: _phase, beam: _beam),
+                              const SizedBox(height: 20),
+                              _Hint(phase: _phase),
+                            ],
+                          ),
                   ),
                 ),
                 if (_phase == _ScanPhase.matched && _matchedCard != null)
@@ -582,66 +587,25 @@ class _MatchSheet extends StatelessWidget {
             if (hasMultiple) ...[
               const SizedBox(height: 14),
               Text(
-                'Choisis ton illustration',
+                Strings.scannerVariantPickerTitle,
                 style: AppTypography.eyebrow(size: 11),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               SizedBox(
-                // 70 (image) + 4 (gap) + ~14 (label, height 1.0) + 8 (padding)
-                // + 4 (bordure 2 + ε arrondi) = 100 px de marge pour éviter
-                // l'overflow quand le label fait 1 ligne.
-                height: 104,
+                // 112 (image) + 6 (gap) + ~13 (label) + 8 (padding) + 4 (bordure)
+                // = ~143, on prend 152 pour de la marge.
+                height: 152,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: variants.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 10),
-                  itemBuilder: (_, i) {
-                    final v = variants[i];
-                    final isSelected = v.id == selectedVariantId;
-                    final thumbDisplay =
-                        CatalogueEntry(card: card, variant: v).toDisplay();
-                    return GestureDetector(
-                      onTap: () => onSelectVariant(v.id),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.gold
-                                : AppColors.line2,
-                            width: isSelected ? 2 : 1,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CardArtTile(
-                              card: thumbDisplay,
-                              width: 50,
-                              height: 70,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _labelOf(v),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.inter(
-                                size: 9.5,
-                                weight: FontWeight.w600,
-                                color: isSelected
-                                    ? AppColors.gold
-                                    : AppColors.text2,
-                                letterSpacing: 0.04,
-                                height: 1.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                  itemBuilder: (_, i) => _VariantThumb(
+                    card: card,
+                    variant: variants[i],
+                    isSelected: variants[i].id == selectedVariantId,
+                    label: _labelOf(variants[i]),
+                    onSelect: () => onSelectVariant(variants[i].id),
+                  ),
                 ),
               ),
             ],
@@ -736,3 +700,105 @@ class _MatchSheet extends StatelessWidget {
   }
 }
 
+/// Thumb d'un variant dans le picker. Tap principal = sélection, icône loupe
+/// (top-right) = ouverture de la modale zoom plein écran.
+class _VariantThumb extends StatelessWidget {
+  const _VariantThumb({
+    required this.card,
+    required this.variant,
+    required this.isSelected,
+    required this.label,
+    required this.onSelect,
+  });
+
+  final CatalogueCard card;
+  final CardVariant variant;
+  final bool isSelected;
+  final String label;
+  final VoidCallback onSelect;
+
+  void _openZoom(BuildContext context) {
+    final url = variant.imageUrl ?? card.imageUrl;
+    if (url == null || url.isEmpty) return;
+    ImageZoomDialog.show(
+      context,
+      imageUrl: url,
+      title: card.name,
+      subtitle: '${card.code} · $label',
+      heroTag: 'variant-${variant.id}',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final thumbDisplay =
+        CatalogueEntry(card: card, variant: variant).toDisplay();
+    return GestureDetector(
+      onTap: onSelect,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppColors.gold : AppColors.line2,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              children: [
+                Hero(
+                  tag: 'variant-${variant.id}',
+                  child: CardArtTile(
+                    card: thumbDisplay,
+                    width: 80,
+                    height: 112,
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Material(
+                    color: const Color(0xCC0A0A0B),
+                    shape: const CircleBorder(
+                      side: BorderSide(color: AppColors.line2),
+                    ),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => _openZoom(context),
+                      child: const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Icon(
+                          Icons.zoom_in_rounded,
+                          size: 14,
+                          color: AppColors.gold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.inter(
+                size: 10,
+                weight: FontWeight.w600,
+                color: isSelected ? AppColors.gold : AppColors.text2,
+                letterSpacing: 0.04,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

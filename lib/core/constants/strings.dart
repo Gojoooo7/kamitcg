@@ -91,6 +91,8 @@ class Strings {
   static const String scannerNotInCatalogue =
       'Carte non répertoriée dans le catalogue.';
   static const String scannerManualEntry = 'Saisir manuellement';
+  static const String scannerVariantPickerTitle = 'Choisis ton illustration';
+  static const String scannerZoomHint = 'Pince pour zoomer';
 
   // Bottom nav ───────────────────────────────────────────────────────
   static const String navHome = 'Accueil';
